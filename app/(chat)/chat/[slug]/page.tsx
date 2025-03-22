@@ -291,7 +291,7 @@ export default function ChatPage() {
                 isThinking={chatState.isLoading}
             />
             <ChatInput
-                className="absolute left-1/2 z-[1000] -translate-x-1/2 bottom-2"
+                className="absolute left-1/2 z-50 -translate-x-1/2 bottom-2"
                 value={value}
                 chatState={chatState}
                 setChatState={setChatState}

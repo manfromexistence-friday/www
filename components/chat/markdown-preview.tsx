@@ -114,7 +114,7 @@ function CodeBlock({ language, value }: CodeBlockProps) {
 
 export function MarkdownPreview({ content }: { content: string }) {
     return (
-        <div className="prose prose-sm dark:prose-invert min-w-full [&_ol]:ml-2 [&_pre]:bg-transparent [&_pre]:p-0">
+        <div className="prose prose-sm dark:prose-invert min-w-full [&_ol]:ml-2 [&_pre]:bg-transparent [&_pre]:p-0 !z-[-100]">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkMath]}
                 rehypePlugins={[rehypeKatex]}

@@ -138,7 +138,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
             <Button
                 onClick={() => scrollToBottom(true)}
                 className={cn(
-                    "fixed bottom-32 right-4 z-50 h-10 w-10 rounded-full p-0 shadow-md transition-all duration-200 md:bottom-24",
+                    "fixed bottom-48 right-4 z-50 h-10 w-10 rounded-full p-0 shadow-md transition-all duration-200 md:bottom-24",
                     showScrollButton ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
                 )}
                 size="icon"
