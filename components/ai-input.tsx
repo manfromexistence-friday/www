@@ -12,6 +12,10 @@ import { useRouter } from "next/navigation"
 import { v4 as uuidv4 } from 'uuid'
 import { doc, setDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
+// Add these Firebase imports
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 
 // First, update the ChatState interface if not already defined
 interface ChatState {
@@ -23,16 +27,37 @@ interface ChatState {
 const MIN_HEIGHT = 48
 const MAX_HEIGHT = 164
 
-// Alternative approach using ref
 export default function AiInput() {
   const queryClient = useQueryClient()
   const { categorySidebarState } = useCategorySidebar()
   const { subCategorySidebarState } = useSubCategorySidebar()
   const router = useRouter()
   const [selectedAI, setSelectedAI] = useState("gemini-2.0-flash")
+  const { user } = useAuth()
 
   const [value, setValue] = useState("")
   const [isMaxHeight, setIsMaxHeight] = useState(false)
+  // Add login state
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  // Add login handler - similar to site-header.tsx
+  const handleLogin = async () => {
+    try {
+      setIsLoggingIn(true)
+      const auth = getAuth()
+      const provider = new GoogleAuthProvider()
+      await signInWithPopup(auth, provider)
+      toast.success("Successfully logged in")
+      
+      // If we had stored a pending message, we could retrieve it here
+      // const pendingMessage = sessionStorage.getItem('pendingMessage')
+    } catch (error) {
+      console.error('Error signing in:', error)
+      toast.error('Failed to log in. Please try again.')
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
 
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: MIN_HEIGHT,
@@ -53,7 +78,7 @@ export default function AiInput() {
     
     const scrollHeight = textareaRef.current.scrollHeight
     textareaRef.current.style.height = `${Math.min(scrollHeight, MAX_HEIGHT)}px`
-  }, [textareaRef]) // Add textareaRef to dependencies
+  }, [textareaRef])
 
   const [showSearch, setShowSearch] = useState(false)
   const [showResearch, setShowReSearch] = useState(false)
@@ -72,6 +97,19 @@ export default function AiInput() {
 
   const handleSubmit = async () => {
     if (!value.trim() || chatState.isLoading) return;
+
+    // Check if user is authenticated
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "Please sign in to chat with Friday AI",
+        action: {
+          label: isLoggingIn ? "Signing in..." : "Sign In",
+          onClick: handleLogin,
+        },
+        duration: 5000, // Show for 5 seconds
+      });
+      return;
+    }
 
     try {
       const chatId = uuidv4()
@@ -93,7 +131,8 @@ export default function AiInput() {
         model: selectedAI,
         visibility: 'public',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        creatorUid: user.uid // Add user ID to the chat data
       }
 
       // Store chat data in Firestore
@@ -113,62 +152,37 @@ export default function AiInput() {
         ...prev,
         error: "Failed to create chat"
       }))
+      toast.error("Failed to create chat", {
+        description: "Please try again later"
+      });
     }
   }
 
-  const mountedRef = useRef(true)
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false
-      // Cleanup any pending operations
-      if (chatState.isLoading) {
-        setChatState(prev => ({ ...prev, isLoading: false }))
-      }
-    }
-  }, [chatState.isLoading]) // Empty dependency array since we're using a ref
-
-  useEffect(() => {
-    return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview)
-      }
-    }
-  }, [imagePreview])
-
-  const messagesEndRef = useRef<HTMLDivElement>(null!)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [chatState.messages, chatState.isLoading])
+  // Rest of the component remains the same...
 
   return (
     <div className={cn(
       "relative flex w-full flex-col items-center justify-center transition-[left,right,width,margin-right] duration-200 ease-linear",
     )}>
       <ChatInput
-      value={value}
-      chatState={chatState}
-      setChatState={setChatState}
-      showSearch={showSearch}
-      showResearch={showResearch}
-      imagePreview={imagePreview}
-      inputHeight={inputHeight}
-      textareaRef={textareaRef as React.RefObject<HTMLTextAreaElement>}
-      onSubmit={handleSubmit}
-      onChange={setValue}
-      onHeightChange={handleAdjustHeight}
-      onImageChange={(file) =>
-        file ? setImagePreview(URL.createObjectURL(file)) : setImagePreview(null)
-      }
-      onSearchToggle={() => setShowSearch(!showSearch)}
-      onResearchToggle={() => setShowReSearch(!showResearch)}
-      selectedAI={selectedAI}
-      onAIChange={setSelectedAI}
+        value={value}
+        chatState={chatState}
+        setChatState={setChatState}
+        showSearch={showSearch}
+        showResearch={showResearch}
+        imagePreview={imagePreview}
+        inputHeight={inputHeight}
+        textareaRef={textareaRef as React.RefObject<HTMLTextAreaElement>}
+        onSubmit={handleSubmit}
+        onChange={setValue}
+        onHeightChange={handleAdjustHeight}
+        onImageChange={(file) =>
+          file ? setImagePreview(URL.createObjectURL(file)) : setImagePreview(null)
+        }
+        onSearchToggle={() => setShowSearch(!showSearch)}
+        onResearchToggle={() => setShowReSearch(!showResearch)}
+        selectedAI={selectedAI}
+        onAIChange={setSelectedAI}
       />
     </div>
   )

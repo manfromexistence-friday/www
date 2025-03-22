@@ -95,30 +95,30 @@ export function InputActions({
 
   return (
     <div className="mt-2 h-12 rounded-b-xl">
-      <div className="absolute bottom-3 left-3 flex items-center gap-1">
+      <div className="absolute bottom-3 left-3 flex items-center gap-1 max-w-[50%]">
         <Popover open={aiOpen} onOpenChange={setAiOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
               aria-expanded={aiOpen}
-              className="bg-primary-foreground hover:bg-secondary h-8 min-w-[200px] justify-between px-2 text-xs"
+              className="bg-primary-foreground hover:bg-secondary h-8 w-full md:w-[200px] min-w-[50px] sm:min-w-[150px] md:min-w-[180px] justify-between px-2 text-xs"
             >
-              <span className="w-32 truncate text-start">
+              <span className="truncate text-start flex-1 mr-1">
                 {selectedAI
                   ? ais.find((ai) => ai.value === selectedAI)?.label
                   : "Gemini 2.0 Flash"}
               </span>
-              <ChevronDown className="opacity-50" />
+              <ChevronDown className="opacity-50 flex-shrink-0" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="z-[100000] mr-2 w-[200px] p-0 text-xs">
+          <PopoverContent className="z-[100000] mr-2 w-[var(--radix-popover-trigger-width)] p-0 text-xs">
             <Command className="bg-primary-foreground">
               <CommandInput placeholder="Search ai..." />
               <CommandList className="overflow-hidden">
                 <CommandEmpty>No ai found.</CommandEmpty>
                 <CommandGroup className="px-0">
-                  <ScrollArea className="h-[300px] px-1.5">
+                  <ScrollArea className="max-h-[300px] h-max px-1.5">
                     {ais.map((ai) => (
                       <CommandItem
                         className="text-xs"
@@ -131,7 +131,7 @@ export function InputActions({
                           setAiOpen(false);
                         }}
                       >
-                        {ai.label}
+                        <span className="truncate max-w-full w-[20px] flex-1">{ai.label}</span>
                         <Check
                           className={cn(
                             "ml-auto",
@@ -147,6 +147,8 @@ export function InputActions({
           </PopoverContent>
         </Popover>
       </div>
+      
+      {/* Rest of the component (buttons on right) remains the same */}
       <div className="absolute bottom-3 right-3 flex items-center gap-1">
         {/* Research Button */}
         <motion.button

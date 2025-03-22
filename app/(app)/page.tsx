@@ -4,6 +4,7 @@ import * as React from "react"
 import AiInput from '@/components/ai-input'
 import Tags from "@/components/tags"
 import Friday from "@/components/friday/friday"
+import { Toaster } from "sonner" // Import Toaster
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <h1 className="bold w-full text-center font-sans text-3xl">Friday - Your ai friend.</h1>
       <AiInput />
       <Tags />
+      <Toaster position="top-center" />
     </div>
   )
 }
