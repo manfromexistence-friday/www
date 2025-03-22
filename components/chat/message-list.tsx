@@ -174,7 +174,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         <ScrollArea 
             ref={scrollAreaRef} 
             className="z-10 h-full flex-1 pt-12"
-            // onScrollCapture={handleScroll}
+            onScrollCapture={handleScroll}
         >
             <div className="w-full space-y-2.5 px-2 pt-3.5 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2">
                 {messagesList.map((message, index) => (
