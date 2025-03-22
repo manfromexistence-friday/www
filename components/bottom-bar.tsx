@@ -6,15 +6,68 @@ import { cn } from "@/lib/utils"
 import { useParams } from "next/navigation"
 import { useCategorySidebar } from "@/components/sidebar/category-sidebar"
 import { useSubCategorySidebar } from "@/components/sidebar/sub-category-sidebar"
+import { useEffect, useState } from "react"
 
 export function BottomBar() {
   const params = useParams()
   const { categorySidebarState } = useCategorySidebar()
   const { subCategorySidebarState } = useSubCategorySidebar()
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+  const [initialHeight, setInitialHeight] = useState(0)
+
+  // Detect keyboard visibility based on viewport height changes
+  useEffect(() => {
+    // Save initial window height on first render
+    if (typeof window !== "undefined") {
+      setInitialHeight(window.innerHeight)
+      
+      const handleResize = () => {
+        // If window height reduced significantly (by at least 25%), assume keyboard is open
+        // This threshold may need adjustment based on testing with different devices
+        const heightDifference = initialHeight - window.innerHeight
+        const heightChangePercentage = (heightDifference / initialHeight) * 100
+        
+        if (heightChangePercentage > 25) {
+          setIsKeyboardVisible(true)
+        } else {
+          setIsKeyboardVisible(false)
+        }
+      }
+      
+      // Also detect focus on input elements as an additional hint
+      const handleFocus = (e: FocusEvent) => {
+        const target = e.target as HTMLElement
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+          // Small delay to match the keyboard animation
+          setTimeout(() => setIsKeyboardVisible(true), 100)
+        }
+      }
+      
+      const handleBlur = () => {
+        // Small delay to handle cases where focus moves between inputs
+        setTimeout(() => {
+          // Only reset if no input element is focused
+          if (!document.querySelector('input:focus, textarea:focus')) {
+            setIsKeyboardVisible(false)
+          }
+        }, 100)
+      }
+
+      window.addEventListener('resize', handleResize)
+      document.addEventListener('focusin', handleFocus)
+      document.addEventListener('focusout', handleBlur)
+      
+      return () => {
+        window.removeEventListener('resize', handleResize)
+        document.removeEventListener('focusin', handleFocus)
+        document.removeEventListener('focusout', handleBlur)
+      }
+    }
+  }, [initialHeight])
 
   const navItems = [
     {
-      href: "/home",
+      href: "/",
       icon: Home,
       label: "Home"
     },
@@ -42,8 +95,10 @@ export function BottomBar() {
 
   return (
     <nav className={cn(
-      "bg-background fixed bottom-0 z-50 flex h-12 items-center justify-around border-t md:hidden lg:hidden",
+      "bg-background fixed bottom-0 z-50 flex h-12 items-center justify-around border-t transition-all duration-200",
       "w-full", // Always full width on mobile
+      isKeyboardVisible ? "translate-y-full opacity-0" : "translate-y-0 opacity-100",
+      "md:hidden lg:hidden", // Hide on larger screens
     )}>
       {navItems.map((item) => (
         <Link
