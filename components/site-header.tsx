@@ -1,24 +1,30 @@
-"use client"
+'use client'
 
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
-import Friday from "./friday/friday"
-import * as React from "react"
-import { useState } from "react"
-import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { useCategorySidebar } from "@/components/sidebar/category-sidebar"
-import { NavActions } from "@/components/sidebar/nav-actions"
-import { useSubCategorySidebar } from "@/components/sidebar/sub-category-sidebar"
-import { CategoryRightSidebar, SubCategoryRightSidebar } from "@/components/sidebar/right-sidebar"
-import { usePathname } from "next/navigation"
-import { User as FirebaseUser, getAuth, signOut, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
-import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { Menu } from 'lucide-react'
+import Friday from './friday/friday'
+import * as React from 'react'
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { useCategorySidebar } from '@/components/sidebar/category-sidebar'
+import { NavActions } from '@/components/sidebar/nav-actions'
+import { useSubCategorySidebar } from '@/components/sidebar/sub-category-sidebar'
+import { CategoryRightSidebar, SubCategoryRightSidebar } from '@/components/sidebar/right-sidebar'
+import { usePathname } from 'next/navigation'
+import {
+  User as FirebaseUser,
+  getAuth,
+  signOut,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from 'firebase/auth'
+import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +33,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useSidebar } from "@/components/ui/sidebar"
+} from '@/components/ui/dropdown-menu'
+import { useSidebar } from '@/components/ui/sidebar'
 import {
   BadgeCheck,
   Bell,
@@ -38,25 +44,21 @@ import {
   LogOut,
   Sparkles,
   Key,
-} from "lucide-react"
-import { NavFavorites } from "@/components/sidebar/favorites"
-import ThemeToggleButton from "@/components/ui/theme-toggle-button"
-import { useParams } from "next/navigation"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+} from 'lucide-react'
+import { NavFavorites } from '@/components/sidebar/favorites'
+import ThemeToggleButton from '@/components/ui/theme-toggle-button'
+import { useParams } from 'next/navigation'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore'
-import { db } from "@/lib/firebase/config"
-import { GlobeIcon, LockIcon, EyeOff, Loader2 } from "lucide-react"
-import { useEffect } from "react"
-import { SidebarProvider } from "@/components/sidebar/actions-sidebar"
-import { MoonIcon, SunIcon } from "lucide-react"
-import { useTheme } from "next-themes"
-import {
-  AnimationStart,
-  AnimationVariant,
-  createAnimation,
-} from "@/components/ui/theme-animations"
+import { db } from '@/lib/firebase/config'
+import { GlobeIcon, LockIcon, EyeOff, Loader2 } from 'lucide-react'
+import { useEffect } from 'react'
+import { SidebarProvider } from '@/components/sidebar/actions-sidebar'
+import { MoonIcon, SunIcon } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { AnimationStart, AnimationVariant, createAnimation } from '@/components/ui/theme-animations'
 
-type ChatVisibility = "public" | "private" | "unlisted"
+type ChatVisibility = 'public' | 'private' | 'unlisted'
 
 interface ChatData {
   id: string
@@ -70,18 +72,18 @@ interface ChatData {
 const visibilityConfig = {
   public: {
     icon: <GlobeIcon className="size-[13px]" />,
-    text: "Public",
-    description: "Visible to everyone",
+    text: 'Public',
+    description: 'Visible to everyone',
   },
   private: {
     icon: <LockIcon className="size-[13px]" />,
-    text: "Private",
-    description: "Only visible to you",
+    text: 'Private',
+    description: 'Only visible to you',
   },
   unlisted: {
     icon: <EyeOff className="size-[13px]" />,
-    text: "Unlisted",
-    description: "Only accessible via link",
+    text: 'Unlisted',
+    description: 'Only accessible via link',
   },
 } as const
 
@@ -91,7 +93,7 @@ export function SiteHeader() {
   const { categorySidebarState, categorySidebarToggleSidebar } = useCategorySidebar()
   const { subCategorySidebarState, subCategorySidebarToggleSidebar } = useSubCategorySidebar()
   const { user } = useAuth()
-  const { isMobile } = useSidebar()
+  const { isMobile, state: leftSidebarState } = useSidebar() // Add leftSidebarState from useSidebar
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
@@ -100,36 +102,40 @@ export function SiteHeader() {
   const [isChangingVisibility, setIsChangingVisibility] = useState(false)
   const { theme, setTheme } = useTheme()
 
-  const styleId = "theme-transition-styles"
+  const styleId = 'theme-transition-styles'
 
   const updateStyles = React.useCallback((css: string, name: string) => {
-    if (typeof window === "undefined") return
+    if (typeof window === 'undefined') return
 
     let styleElement = document.getElementById(styleId) as HTMLStyleElement
 
-    console.log("style ELement", styleElement)
-    console.log("name", name)
+    console.log('style ELement', styleElement)
+    console.log('name', name)
 
     if (!styleElement) {
-      styleElement = document.createElement("style")
+      styleElement = document.createElement('style')
       styleElement.id = styleId
       document.head.appendChild(styleElement)
     }
 
     styleElement.textContent = css
 
-    console.log("content updated")
+    console.log('content updated')
   }, [])
 
   const toggleTheme = React.useCallback(() => {
-    const animation = createAnimation("gif", "center", "https://media.giphy.com/media/5PncuvcXbBuIZcSiQo/giphy.gif?cid=ecf05e47j7vdjtytp3fu84rslaivdun4zvfhej6wlvl6qqsz&ep=v1_stickers_search&rid=giphy.gif&ct=s")
+    const animation = createAnimation(
+      'gif',
+      'center',
+      'https://media.giphy.com/media/5PncuvcXbBuIZcSiQo/giphy.gif?cid=ecf05e47j7vdjtytp3fu84rslaivdun4zvfhej6wlvl6qqsz&ep=v1_stickers_search&rid=giphy.gif&ct=s'
+    )
 
     updateStyles(animation.css, animation.name)
 
-    if (typeof window === "undefined") return
+    if (typeof window === 'undefined') return
 
     const switchTheme = () => {
-      setTheme(theme === "light" ? "dark" : "light")
+      setTheme(theme === 'light' ? 'dark' : 'light')
     }
 
     if (!document.startViewTransition) {
@@ -140,10 +146,7 @@ export function SiteHeader() {
     document.startViewTransition(switchTheme)
   }, [theme, setTheme, updateStyles])
 
-  const {
-    data: chatData,
-    isLoading
-  } = useQuery<ChatData | null>({
+  const { data: chatData, isLoading } = useQuery<ChatData | null>({
     queryKey: ['chat', params?.slug],
     queryFn: async () => {
       if (!params?.slug) return null
@@ -152,7 +155,7 @@ export function SiteHeader() {
       const cachedData = queryClient.getQueryData(['chat', params.slug])
       if (cachedData) return cachedData as ChatData
 
-      const chatRef = doc(db, "chats", params.slug as string)
+      const chatRef = doc(db, 'chats', params.slug as string)
       const chatDoc = await getDoc(chatRef)
 
       if (!chatDoc.exists()) {
@@ -161,7 +164,7 @@ export function SiteHeader() {
 
       const data = {
         id: chatDoc.id,
-        ...(chatDoc.data() as Omit<ChatData, 'id'>)
+        ...(chatDoc.data() as Omit<ChatData, 'id'>),
       }
 
       return data
@@ -170,19 +173,19 @@ export function SiteHeader() {
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     gcTime: 1000 * 60 * 30, // Keep unused data in garbage collection for 30 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false // Prevent refetch when component mounts
+    refetchOnMount: false, // Prevent refetch when component mounts
   })
 
   // Add real-time updates with optimistic UI
   useEffect(() => {
     if (!params?.slug) return
 
-    const chatRef = doc(db, "chats", params.slug as string)
+    const chatRef = doc(db, 'chats', params.slug as string)
     const unsubscribe = onSnapshot(chatRef, (doc) => {
       if (doc.exists()) {
         const data = {
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }
         queryClient.setQueryData(['chat', params.slug], data)
       }
@@ -198,18 +201,18 @@ export function SiteHeader() {
     }
   }, [chatData, params?.slug, pathname, router])
 
-  const title = chatData?.title || ""
-  const visibility = chatData?.visibility || "public"
+  const title = chatData?.title || ''
+  const visibility = chatData?.visibility || 'public'
 
   const handleVisibilityChange = async (newVisibility: ChatVisibility) => {
     if (!params?.slug || newVisibility === visibility) return
 
     setIsChangingVisibility(true)
     try {
-      const chatRef = doc(db, "chats", params.slug as string)
+      const chatRef = doc(db, 'chats', params.slug as string)
       await updateDoc(chatRef, {
         visibility: newVisibility,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       })
 
       // Update React Query cache with proper typing
@@ -218,14 +221,14 @@ export function SiteHeader() {
         return {
           ...oldData,
           visibility: newVisibility,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         }
       })
 
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['chats'] })
     } catch (error) {
-      console.error("Error updating visibility:", error)
+      console.error('Error updating visibility:', error)
     } finally {
       setIsChangingVisibility(false)
     }
@@ -235,17 +238,17 @@ export function SiteHeader() {
   const userImage = (user as FirebaseUser)?.photoURL
   const userName = (user as FirebaseUser)?.displayName
   const userEmail = (user as FirebaseUser)?.email
-  const fallbackInitial = userName?.[0] || userEmail?.[0]?.toUpperCase() || "U"
+  const fallbackInitial = userName?.[0] || userEmail?.[0]?.toUpperCase() || 'U'
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true)
       await signOut(getAuth())
-      router.push("/") // Redirect to home page
-      toast.success("Successfully logged out")
+      router.push('/') // Redirect to home page
+      toast.success('Successfully logged out')
     } catch (error) {
-      console.error("Error signing out:", error)
-      toast.error("Failed to log out. Please try again.")
+      console.error('Error signing out:', error)
+      toast.error('Failed to log out. Please try again.')
     } finally {
       setIsLoggingOut(false)
     }
@@ -257,10 +260,10 @@ export function SiteHeader() {
       const auth = getAuth()
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      toast.success("Successfully logged in")
+      toast.success('Successfully logged in')
     } catch (error) {
-      console.error("Error signing in:", error)
-      toast.error("Failed to log in. Please try again.")
+      console.error('Error signing in:', error)
+      toast.error('Failed to log in. Please try again.')
     } finally {
       setIsLoggingIn(false)
     }
@@ -268,30 +271,30 @@ export function SiteHeader() {
 
   // Get route name
   const getRouteName = () => {
-    if (pathname === "/") return "Home"
-    const lastSegment = pathname ? pathname.split("/").pop() : undefined
-    return lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1) : "Home"
+    if (pathname === '/') return 'Home'
+    const lastSegment = pathname ? pathname.split('/').pop() : undefined
+    return lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1) : 'Home'
   }
 
   // Check if route is chat related
-  const isChatRoute = pathname?.startsWith("/chat") ?? false
+  const isChatRoute = pathname?.startsWith('/chat') ?? false
 
   const handleCategorySidebarToggle = () => {
     categorySidebarToggleSidebar()
-    if (subCategorySidebarState === "expanded") {
+    if (subCategorySidebarState === 'expanded') {
       subCategorySidebarToggleSidebar()
     }
   }
 
   const handleSubCategorySidebarToggle = () => {
     subCategorySidebarToggleSidebar()
-    if (categorySidebarState === "expanded") {
+    if (categorySidebarState === 'expanded') {
       categorySidebarToggleSidebar()
     }
   }
 
   const renderChatHeader = () => {
-    if (!params?.slug) return null;
+    if (!params?.slug) return null
 
     if (isLoading) {
       return (
@@ -302,12 +305,12 @@ export function SiteHeader() {
       )
     }
 
-    if (!chatData) return null;
+    if (!chatData) return null
 
     return (
       <>
         <span className="flex h-full w-min items-center truncate text-[13px] font-medium">
-          {chatData.title || "Untitled Chat"}
+          {chatData.title || 'Untitled Chat'}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -320,15 +323,13 @@ export function SiteHeader() {
               {isChangingVisibility ? (
                 <>
                   <Loader2 className="size-[13px] animate-spin" />
-                  <span className="flex h-full items-center text-[10px]">
-                    Changing...
-                  </span>
+                  <span className="flex h-full items-center text-[10px]">Changing...</span>
                 </>
               ) : (
                 <>
-                  {visibilityConfig[chatData.visibility || "public"].icon}
+                  {visibilityConfig[chatData.visibility || 'public'].icon}
                   <span className="flex h-full items-center text-[10px]">
-                    {visibilityConfig[chatData.visibility || "public"].text}
+                    {visibilityConfig[chatData.visibility || 'public'].text}
                   </span>
                 </>
               )}
@@ -347,9 +348,7 @@ export function SiteHeader() {
                   {config.icon}
                   <div className="flex flex-col">
                     <span className="text-sm">{config.text}</span>
-                    <span className="text-muted-foreground text-xs">
-                      {config.description}
-                    </span>
+                    <span className="text-muted-foreground text-xs">{config.description}</span>
                   </div>
                 </DropdownMenuItem>
               ))}
@@ -360,7 +359,71 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="bg-background absolute left-0 top-0 flex h-12 w-full items-center justify-between border-b pl-2 pr-1.5">
+    <header
+      className={cn(
+        'bg-background fixed top-0 flex h-12 items-center justify-between border-b pl-2 pr-1.5 z-40',
+        // Add transition for smooth changes
+        'transition-all duration-200 ease-linear',
+        // Base width and position - full width on mobile, default md width with 48px offset
+        'w-full left-0 md:w-[calc(100%-48px)]',
+
+        // Left sidebar positioning (after md breakpoint)
+        leftSidebarState === 'expanded'
+          ? 'md:left-64 md:w-[calc(100%-256px)]' // When left sidebar is expanded
+          : 'md:left-12', // When collapsed
+
+        // Width calculations based on sidebar states and viewport
+        // When left sidebar is expanded
+        leftSidebarState === 'expanded' &&
+          categorySidebarState !== 'expanded' &&
+          subCategorySidebarState !== 'expanded'
+          ? 'md:w-[calc(100%-256)]'
+          : '',
+
+        // When left sidebar is expanded + category sidebar
+        leftSidebarState === 'expanded' &&
+          categorySidebarState === 'expanded' &&
+          subCategorySidebarState !== 'expanded'
+          ? 'md:w-[calc(100%-64-64)]'
+          : '',
+
+        // When left sidebar is expanded + subcategory sidebar
+        leftSidebarState === 'expanded' &&
+          categorySidebarState !== 'expanded' &&
+          subCategorySidebarState === 'expanded'
+          ? 'md:w-[calc(100%-64-64)]'
+          : '',
+
+        // When left sidebar is expanded + both category and subcategory
+        leftSidebarState === 'expanded' &&
+          categorySidebarState === 'expanded' &&
+          subCategorySidebarState === 'expanded'
+          ? 'md:w-[calc(100%-64-128)]'
+          : '',
+
+        // When left sidebar is collapsed but category sidebar is expanded
+        leftSidebarState !== 'expanded' &&
+          categorySidebarState === 'expanded' &&
+          subCategorySidebarState !== 'expanded'
+          ? 'md:w-[calc(100%-12-64)]'
+          : '', // Adjusted for 12 left position
+
+        // When left sidebar is collapsed but subcategory sidebar is expanded
+        leftSidebarState !== 'expanded' &&
+          categorySidebarState !== 'expanded' &&
+          subCategorySidebarState === 'expanded'
+          ? 'md:w-[calc(100%-12-64)]'
+          : '', // Adjusted for 12 left position
+
+        // When left sidebar is collapsed but both category and subcategory expanded
+        leftSidebarState !== 'expanded' &&
+          categorySidebarState === 'expanded' &&
+          subCategorySidebarState === 'expanded'
+          ? 'md:w-[calc(100%-12-128)]'
+          : '', // Adjusted for 12 left position
+      )}
+    >
+      {/* Header content */}
       <div className="flex items-center gap-1">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -383,18 +446,16 @@ export function SiteHeader() {
             </ScrollArea>
           </SheetContent>
         </Sheet>
-        {!pathname?.startsWith("/chat") ? (
+        {!pathname?.startsWith('/chat') ? (
           <>
             <Friday className="md:hidden" orbSize={25} shapeSize={21} />
-            <span className="hidden md:flex">{pathname === "/" ? "Home" : pathname}</span>
+            <span className="hidden md:flex">{pathname === '/' ? 'Home' : pathname}</span>
           </>
         ) : (
-          <div className="flex h-12 items-center gap-2">
-            {renderChatHeader()}
-          </div>
+          <div className="flex h-12 items-center gap-2">{renderChatHeader()}</div>
         )}
       </div>
-      <div className="flex max-h-12 items-center">
+      <div className="flex max-h-12 items-center space-x-0">
         {isChatRoute && (
           <SidebarProvider>
             <NavActions />
@@ -408,10 +469,8 @@ export function SiteHeader() {
           >
             <MessageCircle
               className={cn(
-                categorySidebarState === "expanded"
-                  ? "text-primary"
-                  : "text-muted-foreground",
-                "hover:text-primary  size-4"
+                categorySidebarState === 'expanded' ? 'text-primary' : 'text-muted-foreground',
+                'hover:text-primary size-4'
               )}
             />
           </div>
@@ -422,10 +481,8 @@ export function SiteHeader() {
           >
             <Type
               className={cn(
-                subCategorySidebarState === "expanded"
-                  ? "text-primary"
-                  : "text-muted-foreground",
-                "hover:text-primary size-4"
+                subCategorySidebarState === 'expanded' ? 'text-primary' : 'text-muted-foreground',
+                'hover:text-primary size-4'
               )}
             />
           </div>
@@ -438,12 +495,7 @@ export function SiteHeader() {
                 <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
               </Avatar>
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="md:hidden"
-                disabled={isLoggingIn}
-              >
+              <Button variant="outline" size="sm" className="md:hidden" disabled={isLoggingIn}>
                 {isLoggingIn ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -455,7 +507,7 @@ export function SiteHeader() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}
           >
@@ -499,29 +551,32 @@ export function SiteHeader() {
             ) : (
               <DropdownMenuItem onClick={handleLogin} disabled={isLoggingIn}>
                 <Key className="mr-2 h-4 w-4" />
-                {isLoggingIn ? "Signing in..." : "Sign in with Google"}
+                {isLoggingIn ? 'Signing in...' : 'Sign in with Google'}
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={toggleTheme}>
-              {theme === "light" ? <MoonIcon className="mr-2 h-4 w-4" /> : <SunIcon className="mr-2 h-4 w-4" />}
-              {theme === "light" ? "Dark" : "Light"} Mode
+              {theme === 'light' ? (
+                <MoonIcon className="mr-2 h-4 w-4" />
+              ) : (
+                <SunIcon className="mr-2 h-4 w-4" />
+              )}
+              {theme === 'light' ? 'Dark' : 'Light'} Mode
             </DropdownMenuItem>
             {user && (
-              <DropdownMenuItem
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-              >
+              <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                {isLoggingOut ? "Logging out..." : "Log out"}
+                {isLoggingOut ? 'Logging out...' : 'Log out'}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <CategoryRightSidebar className="ml-0" />
-        <SubCategoryRightSidebar className="ml-0" />
+        {/* Remove any margin from the right sidebars */}
+        <div className="flex items-center gap-0 space-x-0 m-0 p-0">
+          <CategoryRightSidebar className="m-0 p-0" />
+          <SubCategoryRightSidebar className="m-0 p-0" />
+        </div>
       </div>
     </header>
   )
 }
-
