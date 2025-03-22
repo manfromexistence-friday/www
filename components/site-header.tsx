@@ -309,7 +309,7 @@ export function SiteHeader() {
 
     return (
       <>
-        <span className="flex h-full w-min items-center truncate text-[13px] font-medium">
+        <span className="flex h-full w-min items-center truncate text-[13px] font-medium max-w-10">
           {chatData.title || 'Untitled Chat'}
         </span>
         <DropdownMenu>
