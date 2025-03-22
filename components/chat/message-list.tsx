@@ -2,7 +2,7 @@ import React, { useLayoutEffect, useRef, useState, useCallback, useEffect } from
 import { Message } from "@/types/chat"
 import { ChatMessage } from "@/components/chat/chat-message"
 import { Sparkles, ChevronDown } from "lucide-react"
-import AnimatedGradientText from "@/components/ui/animated-gradient-text"
+import AnimatedGradientText from "@/components/ui/animated-gradient-text" 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -20,26 +20,8 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
     const [showScrollButton, setShowScrollButton] = useState(false)
     const prevMessagesLengthRef = useRef(messagesList.length)
     
-    // Use a ref to track the previous thinking state for smoother transitions
-    const prevThinkingRef = useRef(isThinking)
-    
-    // Add delay to hide the thinking indicator for smoother transitions
-    const [delayedThinking, setDelayedThinking] = useState(isThinking || false)
-    
-    // Handle the thinking state with delay on hiding
-    useEffect(() => {
-        if (isThinking) {
-            // When thinking starts, show immediately
-            setDelayedThinking(true)
-        } else {
-            // When thinking stops, delay hiding slightly
-            const timeoutId = setTimeout(() => {
-                setDelayedThinking(false)
-            }, 500) // 500ms delay before hiding
-            
-            return () => clearTimeout(timeoutId)
-        }
-    }, [isThinking])
+    // REMOVE the delayed thinking state and previous thinking ref
+    // We'll just use the isThinking prop directly
     
     // Simple scroll function that works with plain DOM
     const scrollToBottom = useCallback(() => {
@@ -59,15 +41,12 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         }
     }, [])
     
-    // Scroll on new messages or thinking state changes - 
-    // useLayoutEffect happens before browser paint
+    // Scroll on new messages or thinking state changes
     useLayoutEffect(() => {
         const messagesChanged = messagesList.length !== prevMessagesLengthRef.current
         prevMessagesLengthRef.current = messagesList.length
         
-        if (messagesChanged || isThinking !== prevThinkingRef.current) {
-            prevThinkingRef.current = isThinking
-            
+        if (messagesChanged) {
             // For best results, scroll immediately then again after a delay
             scrollToBottom()
             
@@ -78,7 +57,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
             
             return () => timeouts.forEach(clearTimeout)
         }
-    }, [messagesList.length, isThinking, scrollToBottom])
+    }, [messagesList.length, scrollToBottom])
     
     // Add event listener for scroll
     useEffect(() => {
@@ -120,9 +99,9 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                     />
                 ))}
                 
-                {/* Thinking indicator */}
-                {delayedThinking && (
-                    <div className="mt-2 flex w-full justify-start transition-all duration-300">
+                {/* Thinking indicator - only show if explicitly thinking */}
+                {isThinking && (
+                    <div className="mt-2 flex w-full justify-start">
                         <div className="flex items-start gap-2">
                             <div className="bg-background flex min-h-10 min-w-10 items-center justify-center rounded-full border">
                                 <Sparkles className="size-4 animate-pulse" />
