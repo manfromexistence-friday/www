@@ -37,6 +37,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  Key,
 } from "lucide-react"
 import { NavFavorites } from "@/components/sidebar/favorites"
 import ThemeToggleButton from "@/components/ui/theme-toggle-button"
@@ -400,13 +401,6 @@ export function SiteHeader() {
           </SidebarProvider>
         )}
 
-        {/* <ThemeToggleButton
-          className="hidden md:flex"
-          showLabel
-          variant="gif"
-          url="https://media.giphy.com/media/5PncuvcXbBuIZcSiQo/giphy.gif?cid=ecf05e47j7vdjtytp3fu84rslaivdun4zvfhej6wlvl6qqsz&ep=v1_stickers_search&rid=giphy.gif&ct=s"
-        /> */}
-
         <div className="hover:bg-primary-foreground mr-1.5 flex h-8 items-center justify-center gap-1 rounded-md border px-1.5 md:mr-0">
           <div
             onClick={handleCategorySidebarToggle}
@@ -438,10 +432,26 @@ export function SiteHeader() {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Avatar className="size-7 rounded-lg md:hidden">
-              <AvatarImage src={!user ? "./user.png" : userImage ?? undefined} alt={userName || 'User'} />
-              <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
-            </Avatar>
+            {user ? (
+              <Avatar className="size-7 rounded-lg md:hidden cursor-pointer">
+                <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
+                <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
+              </Avatar>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="md:hidden"
+                disabled={isLoggingIn}
+              >
+                {isLoggingIn ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Key className="mr-2 h-4 w-4" />
+                )}
+                Sign in
+              </Button>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
@@ -449,54 +459,63 @@ export function SiteHeader() {
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="size-8 rounded-lg">
-                  <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
-                  <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate text-sm font-semibold">{userName}</span>
-                  <span className="truncate text-xs">{userEmail}</span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
+            {user ? (
+              <>
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar className="size-8 rounded-lg">
+                      <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
+                      <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate text-sm font-semibold">{userName}</span>
+                      <span className="truncate text-xs">{userEmail}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Upgrade to Pro
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <BadgeCheck className="mr-2 h-4 w-4" />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Bell className="mr-2 h-4 w-4" />
+                    Notifications
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </>
+            ) : (
+              <DropdownMenuItem onClick={handleLogin} disabled={isLoggingIn}>
+                <Key className="mr-2 h-4 w-4" />
+                {isLoggingIn ? "Signing in..." : "Sign in with Google"}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={toggleTheme}
-            >
-              {theme === "light" ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
+            <DropdownMenuItem onClick={toggleTheme}>
+              {theme === "light" ? <MoonIcon className="mr-2 h-4 w-4" /> : <SunIcon className="mr-2 h-4 w-4" />}
               {theme === "light" ? "Dark" : "Light"} Mode
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              <LogOut className="size-4" />
-              {isLoggingOut ? "Logging out..." : "Log out"}
-            </DropdownMenuItem>
+            {user && (
+              <DropdownMenuItem
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {isLoggingOut ? "Logging out..." : "Log out"}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
         <CategoryRightSidebar className="ml-0" />
@@ -505,3 +524,4 @@ export function SiteHeader() {
     </header>
   )
 }
+
