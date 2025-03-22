@@ -45,7 +45,7 @@ import {
   Sparkles,
   Key,
 } from 'lucide-react'
-import { NavFavorites } from '@/components/sidebar/favorites'
+import { History } from '@/components/sidebar/history'
 import ThemeToggleButton from '@/components/ui/theme-toggle-button'
 import { useParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -420,7 +420,7 @@ export function SiteHeader() {
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 px-2">
-                <NavFavorites />
+                <History />
               </div>
             </ScrollArea>
           </SheetContent>

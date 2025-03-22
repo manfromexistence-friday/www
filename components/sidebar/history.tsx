@@ -52,12 +52,12 @@ interface Chat {
   title: string;
   url: string;
   emoji: string;
-  creatorUid: string; // Add this field
+  creatorUid: string;
   lastMessage?: string;
   timestamp?: number;
 }
 
-export function NavFavorites() {
+export function History() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -336,4 +336,3 @@ export function NavFavorites() {
     </>
   )
 }
-

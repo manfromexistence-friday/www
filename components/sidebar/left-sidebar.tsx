@@ -35,7 +35,7 @@ import {
   useSidebar,
   SidebarRail
 } from "@/components/ui/sidebar"
-import { NavFavorites } from "@/components/sidebar/favorites"
+import { History } from "@/components/sidebar/history"
 import { NavUser } from "@/components/sidebar/nav-user"
 import { TeamSwitcher } from "@/components/sidebar/team-switcher"
 import { useCallback, useState, useEffect } from "react"
@@ -493,7 +493,7 @@ export default function LeftSidebar({
           {state === "expanded" ? (
             <div className="">
               <div className="mx-auto h-auto w-[94%] border-t border-dashed" />
-              <NavFavorites />
+              <History />
             </div>
           ) : null}
         </ScrollArea>
