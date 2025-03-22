@@ -38,14 +38,13 @@ export default function ChatPage() {
     const queryClient = useQueryClient()
     const { categorySidebarState } = useCategorySidebar()
     const { subCategorySidebarState } = useSubCategorySidebar()
+
     const [value, setValue] = useState("")
     const messagesEndRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement)
     const [selectedAI, setSelectedAI] = useState("gemini-2.0-flash")
-    const [chatData, setChatData] = useState<any>(null)
-    
-    // Get session ID from URL parameter
-    const sessionId = params.slug
-    
+    const [sessionId, setSessionId] = useState<string>(params.slug)
+    const [initialResponseGenerated, setInitialResponseGenerated] = useState(false)
+
     const { textareaRef, adjustHeight } = useAutoResizeTextarea({
         minHeight: MIN_HEIGHT,
         maxHeight: MAX_HEIGHT,
@@ -76,7 +75,6 @@ export default function ChatPage() {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
                     console.log("Received chat data update:", data);
-                    setChatData(data);
                     
                     // Update chat state with messages from Firestore
                     if (data?.messages) {
@@ -85,6 +83,12 @@ export default function ChatPage() {
                             messages: data.messages,
                             isLoading: false
                         }));
+                    }
+                    
+                    // Load initial AI model
+                    if (data?.model && !selectedAI) {
+                        setSelectedAI(data.model);
+                        aiService.setModel(data.model);
                     }
                 }
             },
@@ -99,50 +103,79 @@ export default function ChatPage() {
             }
         );
         
-        // Load initial AI model from chat data
-        const loadInitialData = async () => {
-            try {
-                const docSnap = await getDoc(chatRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data?.model) {
-                        setSelectedAI(data.model);
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading initial chat data:", error);
-            }
-        };
-        
-        loadInitialData();
-        
         return () => unsubscribe();
     }, [sessionId]);
 
-    // Handle auto-submit when coming from home page
+    // Generate AI response for initial message when page loads
     useEffect(() => {
-        const shouldAutoSubmit = sessionStorage.getItem('autoSubmit') === 'true';
-        const initialPrompt = sessionStorage.getItem('initialPrompt');
+        const shouldGenerateResponse = sessionStorage.getItem('autoSubmit') === 'true';
         const storedModel = sessionStorage.getItem('selectedAI');
         
-        if (shouldAutoSubmit && initialPrompt && sessionId) {
-            console.log("Auto-submitting initial prompt:", initialPrompt);
+        if (shouldGenerateResponse && sessionId && chatState.messages.length > 0 && 
+            !initialResponseGenerated && !chatState.isLoading) {
             
-            // Clear the auto-submit flag immediately to prevent duplicate submissions
-            sessionStorage.removeItem('autoSubmit');
-            sessionStorage.removeItem('initialPrompt');
+            const generateInitialResponse = async () => {
+                try {
+                    console.log("Generating initial AI response");
+                    // Set loading state
+                    setChatState(prev => ({
+                        ...prev,
+                        isLoading: true
+                    }));
+                    
+                    // Clear sessionStorage flags immediately
+                    sessionStorage.removeItem('autoSubmit');
+                    sessionStorage.removeItem('initialPrompt');
+                    setInitialResponseGenerated(true);
+                    
+                    // Get the last user message
+                    const lastMessage = chatState.messages[chatState.messages.length - 1];
+                    if (lastMessage.role !== 'user') {
+                        setChatState(prev => ({...prev, isLoading: false}));
+                        return;
+                    }
+                    
+                    // Set the AI model
+                    if (storedModel) {
+                        setSelectedAI(storedModel);
+                        aiService.setModel(storedModel);
+                    }
+                    
+                    // Generate AI response
+                    const aiResponse = await aiService.generateResponse(lastMessage.content);
+                    
+                    // Add AI response to Firestore
+                    const assistantMessage: Message = {
+                        id: crypto.randomUUID(),
+                        role: "assistant",
+                        content: aiResponse,
+                        timestamp: new Date().toISOString(),
+                    };
+                    
+                    const chatRef = doc(db, "chats", sessionId);
+                    await updateDoc(chatRef, {
+                        messages: arrayUnion(assistantMessage),
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    // The onSnapshot listener will update the UI
+                    
+                } catch (error) {
+                    console.error("Error generating initial response:", error);
+                    setChatState(prev => ({
+                        ...prev,
+                        isLoading: false,
+                        error: "Failed to generate AI response"
+                    }));
+                    toast.error("Failed to generate initial AI response");
+                }
+            };
             
-            // Set the selected AI model if available
-            if (storedModel) {
-                setSelectedAI(storedModel);
-                aiService.setModel(storedModel);
-            }
-            
-            // We don't need to set value or call handleSubmit - the initial message
-            // should already be in Firestore from the home page submission
+            generateInitialResponse();
         }
-    }, [sessionId]);
+    }, [sessionId, chatState.messages, initialResponseGenerated, chatState.isLoading]);
 
+    // Handle normal submissions
     const handleSubmit = async () => {
         if (!value.trim() || !sessionId || chatState.isLoading) return;
 
@@ -154,7 +187,7 @@ export default function ChatPage() {
                 error: null
             }));
             
-            // 1. Create user message
+            // Create user message
             const userMessage: Message = {
                 id: crypto.randomUUID(),
                 role: "user",
@@ -162,24 +195,24 @@ export default function ChatPage() {
                 timestamp: new Date().toISOString(),
             };
 
-            // 2. Add user message to Firestore
+            // Add user message to Firestore
             const chatRef = doc(db, "chats", sessionId);
             await updateDoc(chatRef, {
                 messages: arrayUnion(userMessage),
                 updatedAt: new Date().toISOString()
             });
 
-            // Clear input and reset height
+            // Clear input
             setValue("");
             if (textareaRef.current) {
                 textareaRef.current.style.height = `${MIN_HEIGHT}px`;
             }
 
-            // 3. Generate AI response
+            // Generate AI response
             aiService.setModel(selectedAI);
             const aiResponse = await aiService.generateResponse(userMessage.content);
 
-            // 4. Add AI response to Firestore
+            // Add AI response to Firestore
             const assistantMessage: Message = {
                 id: crypto.randomUUID(),
                 role: "assistant",
@@ -192,8 +225,6 @@ export default function ChatPage() {
                 updatedAt: new Date().toISOString()
             });
 
-            // The onSnapshot listener will update the UI automatically
-
         } catch (error) {
             console.error("Error:", error);
             setChatState(prev => ({
@@ -201,9 +232,7 @@ export default function ChatPage() {
                 isLoading: false,
                 error: error instanceof Error ? error.message : "Failed to get AI response"
             }));
-            toast.error("Failed to get AI response", { 
-                description: error instanceof Error ? error.message : "Please try again"
-            });
+            toast.error("Failed to get AI response");
         }
     };
 
@@ -226,10 +255,10 @@ export default function ChatPage() {
 
     return (
         <div className={cn(
-            "flex h-full w-full flex-col transition-[left,right,width,margin-right] duration-200 ease-linear",
+            "relative flex h-[94vh] w-full flex-col transition-[left,right,width,margin-right] duration-200 ease-linear",
         )}>
             {chatState.error && (
-                <div className="bg-destructive/90 absolute inset-x-0 top-0 z-50 p-2 text-center text-sm">
+                <div className="bg-destructive/90 absolute inset-x-0 top-0 z-50 p-2 text-center text-sm text-white">
                     {chatState.error}
                 </div>
             )}
@@ -240,7 +269,7 @@ export default function ChatPage() {
                 isThinking={chatState.isLoading}
             />
             <ChatInput
-                className="absolute bottom-14 left-1/2 z-[1000] -translate-x-1/2 md:bottom-2"
+                className="absolute left-1/2 z-[1000] -translate-x-1/2 bottom-2"
                 value={value}
                 chatState={chatState}
                 setChatState={setChatState}

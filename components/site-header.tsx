@@ -299,8 +299,8 @@ export function SiteHeader() {
     if (isLoading) {
       return (
         <div className="flex items-center gap-2">
-          <div className="bg-muted h-4 w-24 animate-pulse rounded"></div>
-          <div className="bg-muted h-4 w-16 animate-pulse rounded"></div>
+          <div className="bg-muted h-8 w-24 animate-pulse rounded"></div>
+          <div className="bg-muted h-8 w-16 animate-pulse rounded"></div>
         </div>
       )
     }
