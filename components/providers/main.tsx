@@ -18,7 +18,7 @@ export function Main({ children }: MainProps) {
   return (
     <ScrollArea
       className={cn(
-        'no-scrollbar flex h-screen w-full flex-col overflow-y-auto py-12 transition-all duration-200 ease-linear md:pb-0',
+        'no-scrollbar flex h-screen w-full flex-col overflow-y-auto transition-all duration-200 ease-linear md:pb-0',
         categorySidebarState === 'expanded' && 'pr-64',
         subCategorySidebarState === 'expanded' && 'pr-64'
       )}

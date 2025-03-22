@@ -478,13 +478,8 @@ export function SiteHeader() {
                 variant="outline"
                 size="sm"
                 className="md:text-muted-foreground md:hover:text-primary md:hidden"
-                disabled={isLoggingIn}
+                onClick={handleLogin}
               >
-                {isLoggingIn ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <Key className="mr-2 size-4" />
-                )}
                 Sign in
               </Button>
             )}
@@ -495,7 +490,7 @@ export function SiteHeader() {
             align="end"
             sideOffset={4}
           >
-            {user ? (
+            {user && (
               <>
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -531,27 +526,20 @@ export function SiteHeader() {
                     Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {theme === 'light' ? (
+                    <MoonIcon className="mr-2 size-4" />
+                  ) : (
+                    <SunIcon className="mr-2 size-4" />
+                  )}
+                  {theme === 'light' ? 'Dark' : 'Light'} Mode
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                  <LogOut className="mr-2 size-4" />
+                  {isLoggingOut ? 'Logging out...' : 'Log out'}
+                </DropdownMenuItem>
               </>
-            ) : (
-              <DropdownMenuItem onClick={handleLogin} disabled={isLoggingIn}>
-                <Key className="mr-2 size-4" />
-                {isLoggingIn ? 'Signing in...' : 'Sign in with Google'}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={toggleTheme}>
-              {theme === 'light' ? (
-                <MoonIcon className="mr-2 size-4" />
-              ) : (
-                <SunIcon className="mr-2 size-4" />
-              )}
-              {theme === 'light' ? 'Dark' : 'Light'} Mode
-            </DropdownMenuItem>
-            {user && (
-              <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
-                <LogOut className="mr-2 size-4" />
-                {isLoggingOut ? 'Logging out...' : 'Log out'}
-              </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
