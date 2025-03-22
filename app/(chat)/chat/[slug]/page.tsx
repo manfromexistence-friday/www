@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import { useAuth } from '@/contexts/auth-context'
 import LoadingAnimation from '@/components/chat/loading-animation'
 import { db } from "@/lib/firebase/config"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore" // Add onSnapshot
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useCategorySidebar } from "@/components/sidebar/category-sidebar"
 import { useSubCategorySidebar } from "@/components/sidebar/sub-category-sidebar"
@@ -17,6 +17,7 @@ import { updateDoc, arrayUnion } from 'firebase/firestore'
 import { useQueryClient } from "@tanstack/react-query"
 import type { Message } from "@/types/chat"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner" // Add toast for error handling
 
 const MIN_HEIGHT = 48
 const MAX_HEIGHT = 164
@@ -69,6 +70,7 @@ export default function ChatPage() {
     const [showResearch, setShowReSearch] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement)
     const [selectedAI, setSelectedAI] = useState("gemini-2.0-flash") // Set default model
 
     // Add chat state management
@@ -77,9 +79,33 @@ export default function ChatPage() {
         isLoading: false,
         error: null,
     })
-    const [chatHistory, setChatHistory] = useState<Message[]>([])
-
-    const initializeRef = useRef(false)
+    
+    // Listen for Firestore updates
+    useEffect(() => {
+        if (!sessionId) return;
+        
+        // Subscribe to the chat document
+        const unsubscribe = onSnapshot(
+            doc(db, "chats", sessionId),
+            (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    if (data?.messages) {
+                        setChatState(prev => ({
+                            ...prev,
+                            messages: data.messages
+                        }));
+                    }
+                }
+            },
+            (error) => {
+                console.error("Error listening to chat updates:", error);
+                toast.error("Failed to receive message updates");
+            }
+        );
+        
+        return () => unsubscribe();
+    }, [sessionId]);
 
     // First wrap updateFirestoreMessages in useCallback
     const updateFirestoreMessages = useCallback(async (message: Message) => {
@@ -133,9 +159,11 @@ export default function ChatPage() {
             handleAdjustHeight(true)
             await updateFirestoreMessages(userMessage)
             
+            // Update local state immediately to show user message
             setChatState(prev => ({
                 ...prev,
                 isLoading: true,
+                messages: [...prev.messages, userMessage]
             }))
 
             aiService.setModel(selectedAI)
@@ -150,9 +178,11 @@ export default function ChatPage() {
 
             await updateFirestoreMessages(assistantMessage)
 
+            // Update local state immediately with AI response
             setChatState(prev => ({
                 ...prev,
                 isLoading: false,
+                messages: [...prev.messages, assistantMessage]
             }))
 
         } catch (error) {
@@ -162,127 +192,48 @@ export default function ChatPage() {
                 isLoading: false,
                 error: error instanceof Error ? error.message : "Failed to get AI response"
             }))
+            toast.error("Failed to get AI response", { 
+                description: error instanceof Error ? error.message : "Please try again"
+            })
         }
     }, [
         value,
         chatState.isLoading,
-        chatState.messages.length,
+        chatState.messages,
         sessionId,
         selectedAI,
         handleAdjustHeight,
-        // updateFirestoreMessages is now stable and won't cause re-renders
         updateFirestoreMessages,
         queryClient
     ])
 
-    const mountedRef = useRef(true)
-
-    useEffect(() => {
-        return () => {
-            mountedRef.current = false
-            // Cleanup any pending operations
-            if (chatState.isLoading) {
-                setChatState(prev => ({ ...prev, isLoading: false }))
-            }
-        }
-    }, [chatState.isLoading]) // Empty dependency array since we're using a ref
-
-    useEffect(() => {
-        return () => {
-            if (imagePreview) {
-                URL.revokeObjectURL(imagePreview)
-            }
-        }
-    }, [imagePreview])
-
-    const messagesEndRef = useRef<HTMLDivElement>(null!)
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-
-    useEffect(() => {
-        scrollToBottom()
-    }, [chatState.messages, chatState.isLoading])
-
-
-    useEffect(() => {
-        const validateAndCreateSession = async () => {
-            if (!user || !params.slug) return
-
-            const chatRef = doc(db, "chats", params.slug as string)
-            const chatDoc = await getDoc(chatRef)
-
-            if (!chatDoc.exists()) {
-                // Create new chat session if it doesn't exist
-                await setDoc(chatRef, {
-                    sessionId: params.slug,
-                    creatorUid: user.uid,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    views: 0,
-                    reactions: {
-                        likes: 0,
-                        dislikes: 0
-                    },
-                    isStarred: false,
-                    isDeleted: false,
-                    title: "New Chat", // Will be updated from backend
-                    messages: [], // Will be populated from backend
-                })
-            }
-
-            setSessionId(params.slug as string)
-            setIsValidating(false)
-        }
-
-        validateAndCreateSession()
-    }, [user, params.slug])
-
-    useEffect(() => {
-        // Get and clear the stored prompt and AI model
-        const initialPrompt = sessionStorage.getItem('initialPrompt')
-        const storedAI = sessionStorage.getItem('selectedAI')
-
-        if (initialPrompt) {
-            setValue(initialPrompt)
-            sessionStorage.removeItem('initialPrompt')
-
-            // Focus the textarea
-            if (textareaRef.current) {
-                textareaRef.current.focus()
-                // Move cursor to end of text
-                const len = initialPrompt.length
-                textareaRef.current.setSelectionRange(len, len)
-            }
-        }
-
-        if (storedAI) {
-            // Set the AI model
-            aiService.setModel(storedAI)
-            sessionStorage.removeItem('selectedAI')
-        }
-    }, [textareaRef])
-
+    // Auto-submit effect with improved error handling
     useEffect(() => {
         const shouldAutoSubmit = sessionStorage.getItem('autoSubmit')
         const initialPrompt = sessionStorage.getItem('initialPrompt')
         
-        if (shouldAutoSubmit === 'true' && initialPrompt) {
-          // Clear the auto-submit flag
-          sessionStorage.removeItem('autoSubmit')
-          
-          // Set the initial value
-          setValue(initialPrompt)
-          
-          // Submit after a short delay to ensure components are mounted
-          const timeoutId = setTimeout(() => {
-            handleSubmit()
-          }, 100)
+        if (shouldAutoSubmit === 'true' && initialPrompt && sessionId) {
+            console.log("Auto-submitting initial prompt:", initialPrompt);
+            
+            // Clear the auto-submit flag
+            sessionStorage.removeItem('autoSubmit')
+            
+            // Set the initial value
+            setValue(initialPrompt)
+            
+            // Submit after a short delay to ensure components are mounted
+            const timeoutId = setTimeout(() => {
+                handleSubmit().catch(err => {
+                    console.error("Auto-submit failed:", err);
+                    toast.error("Failed to process initial message");
+                });
+            }, 500); // Increased delay for better reliability
     
-          return () => clearTimeout(timeoutId)
+            return () => clearTimeout(timeoutId)
         }
-      }, [handleSubmit])
+    }, [handleSubmit, sessionId]) // Added sessionId as dependency
+
+    // Rest of your component remains the same...
 
     if (!user) {
         return (
@@ -301,6 +252,7 @@ export default function ChatPage() {
             )}
             <MessageList
                 chatId={sessionId}
+                messages={chatState.messages} // Pass messages directly
                 messagesEndRef={messagesEndRef}
                 isThinking={chatState.isLoading}
             />

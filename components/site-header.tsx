@@ -466,83 +466,79 @@ export function SiteHeader() {
             />
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            {user ? (
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Avatar className="size-7 cursor-pointer rounded-lg md:hidden">
                 <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
                 <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
               </Avatar>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="md:text-muted-foreground md:hover:text-primary md:hidden"
-                onClick={handleLogin}
-              >
-                Sign in
-              </Button>
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? 'bottom' : 'right'}
-            align="end"
-            sideOffset={4}
-          >
-            {user && (
-              <>
-                <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="size-8 rounded-lg">
-                      <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
-                      <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate text-sm font-semibold">{userName}</span>
-                      <span className="truncate text-xs">{userEmail}</span>
-                    </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              side={isMobile ? 'bottom' : 'right'}
+              align="end"
+              sideOffset={4}
+            >
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
+                    <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate text-sm font-semibold">{userName}</span>
+                    <span className="truncate text-xs">{userEmail}</span>
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <Sparkles className="mr-2 size-4" />
-                    Upgrade to Pro
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <BadgeCheck className="mr-2 size-4" />
-                    Account
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard className="mr-2 size-4" />
-                    Billing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Bell className="mr-2 size-4" />
-                    Notifications
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toggleTheme}>
-                  {theme === 'light' ? (
-                    <MoonIcon className="mr-2 size-4" />
-                  ) : (
-                    <SunIcon className="mr-2 size-4" />
-                  )}
-                  {theme === 'light' ? 'Dark' : 'Light'} Mode
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <Sparkles className="mr-2 size-4" />
+                  Upgrade to Pro
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
-                  <LogOut className="mr-2 size-4" />
-                  {isLoggingOut ? 'Logging out...' : 'Log out'}
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <BadgeCheck className="mr-2 size-4" />
+                  Account
                 </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <DropdownMenuItem>
+                  <CreditCard className="mr-2 size-4" />
+                  Billing
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Bell className="mr-2 size-4" />
+                  Notifications
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleTheme}>
+                {theme === 'light' ? (
+                  <MoonIcon className="mr-2 size-4" />
+                ) : (
+                  <SunIcon className="mr-2 size-4" />
+                )}
+                {theme === 'light' ? 'Dark' : 'Light'} Mode
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                <LogOut className="mr-2 size-4" />
+                {isLoggingOut ? 'Logging out...' : 'Log out'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="md:text-muted-foreground md:hover:text-primary md:hidden"
+            onClick={handleLogin}
+          >
+            Sign in
+          </Button>
+        )}
         {/* Remove any margin from the right sidebars */}
         <div className="m-0 flex items-center gap-0 space-x-0 p-0">
           <CategoryRightSidebar className="m-0 p-0" />

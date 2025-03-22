@@ -10,6 +10,7 @@ import AnimatedGradientText from "@/components/ui/animated-gradient-text"
 
 interface MessageListProps {
     chatId: string
+    messages: Message[];
     messagesEndRef: React.RefObject<HTMLDivElement>
     isThinking?: boolean
 }
