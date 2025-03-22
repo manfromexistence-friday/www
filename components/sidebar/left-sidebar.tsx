@@ -390,7 +390,7 @@ export default function LeftSidebar({
               )}
             </Link>
 
-            <Link href="/home">
+            <Link href="/">
               <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <Home className="size-4" />
                 <span className="text-center text-sm leading-tight">
@@ -490,7 +490,6 @@ export default function LeftSidebar({
               </Link>
             </Tooltip> */}
           </div>
-
           {state === "expanded" ? (
             <div className="">
               <div className="mx-auto h-auto w-[94%] border-t border-dashed" />

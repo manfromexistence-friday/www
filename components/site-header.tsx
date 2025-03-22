@@ -71,17 +71,17 @@ interface ChatData {
 
 const visibilityConfig = {
   public: {
-    icon: <GlobeIcon className="size-[13px]" />,
+    icon: <GlobeIcon className="size-1.5" />,
     text: 'Public',
     description: 'Visible to everyone',
   },
   private: {
-    icon: <LockIcon className="size-[13px]" />,
+    icon: <LockIcon className="size-1.5" />,
     text: 'Private',
     description: 'Only visible to you',
   },
   unlisted: {
-    icon: <EyeOff className="size-[13px]" />,
+    icon: <EyeOff className="size-1.5" />,
     text: 'Unlisted',
     description: 'Only accessible via link',
   },
@@ -309,15 +309,17 @@ export function SiteHeader() {
 
     return (
       <>
-        <span className="flex h-full w-min items-center truncate text-[13px] font-medium max-w-10">
-          {chatData.title || 'Untitled Chat'}
-        </span>
+        <div className="relative max-w-[50px] hidden xs:block xs:max-w-[85px] sm:max-w-[200px] md:max-w-[250px] overflow-hidden">
+          <span className="block truncate text-[13px] font-medium">
+            {chatData.title || 'Untitled Chat'}
+          </span>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="hover:bg-primary-foreground hover:text-primary ml-2 flex h-7 items-center justify-center gap-1.5 rounded-full border px-2"
+              className="2xs:flex hover:bg-primary-foreground hover:text-primary hidden h-7 items-center justify-center gap-1.5 rounded-full border px-2"
               disabled={isChangingVisibility}
             >
               {isChangingVisibility ? (
@@ -361,7 +363,7 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        'bg-background fixed top-0 z-40 flex h-12 items-center justify-between border-b pl-2 pr-1.5',
+        'bg-background fixed top-0 z-40 flex h-12 items-center justify-between border-b px-2',
         // Add transition for smooth changes
         'transition-all duration-200 ease-linear',
         // Base width and position - full width on mobile, default md width with 48px offset
@@ -399,14 +401,17 @@ export function SiteHeader() {
       )}
     >
       {/* Header content */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="size-8 md:hidden">
-              <Menu className="size-5" />
-            </Button>
+            <div className="mr-1 md:text-muted-foreground hover:text-primary flex size-8 items-center justify-center rounded-md border">
+              <Menu className="size-4" />
+            </div>
+            {/* <Button variant="outline" size="icon" className="size-7 md:hidden">
+              <Menu className="size-4" />
+            </Button> */}
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] p-0">
+          <SheetContent side="left" className="w-[280px] p-0 z-[10000]">
             <ScrollArea className="h-full">
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-1 px-6">
@@ -414,7 +419,6 @@ export function SiteHeader() {
                   <span className="font-semibold">Friday</span>
                 </SheetTitle>
               </SheetHeader>
-
               <div className="flex flex-col gap-1 px-2">
                 <NavFavorites />
               </div>
@@ -427,7 +431,7 @@ export function SiteHeader() {
             <span className="hidden md:flex">{pathname === '/' ? 'Home' : pathname}</span>
           </>
         ) : (
-          <div className="flex h-12 items-center gap-2">{renderChatHeader()}</div>
+          <div className="flex h-12 items-center gap-1">{renderChatHeader()}</div>
         )}
       </div>
       <div className="flex max-h-12 items-center space-x-0">
@@ -437,7 +441,7 @@ export function SiteHeader() {
           </SidebarProvider>
         )}
 
-        <div className="hover:bg-primary-foreground mr-1.5 flex h-8 items-center justify-center gap-1 rounded-md border px-1.5 md:mr-0">
+        <div className="hidden xs:flex hover:bg-primary-foreground !mr-1 h-8 items-center justify-center gap-1 rounded-md border px-1.5 md:mr-0">
           <div
             onClick={handleCategorySidebarToggle}
             className="hover:bg-secondary flex size-6 items-center justify-center rounded-md"
@@ -469,7 +473,7 @@ export function SiteHeader() {
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="size-7 cursor-pointer rounded-lg md:hidden">
+              <Avatar className="size-8 cursor-pointer rounded-lg md:hidden">
                 <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
                 <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
               </Avatar>

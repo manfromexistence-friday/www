@@ -106,12 +106,11 @@ export function NavActions() {
   // }, [])
 
   return (
-    <div className="mr-1.5 flex items-center text-sm">
+    <div className="mr-1 flex items-center text-sm">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <div
-
-            className="data-[state=open]:bg-accent text-muted-foreground hover:text-primary flex size-8 items-center justify-center rounded-md border"
+            className="data-[state=open]:bg-accent md:text-muted-foreground hover:text-primary flex size-8 items-center justify-center rounded-md border"
           >
             <MoreHorizontal className="size-4" />
           </div>
@@ -120,8 +119,6 @@ export function NavActions() {
           className="w-56 overflow-hidden rounded-lg p-0"
           align="end"
         >
-
-  
             <Sidebar collapsible="none" className="bg-transparent">
               <SidebarContent>
                 {data.map((group, index) => (

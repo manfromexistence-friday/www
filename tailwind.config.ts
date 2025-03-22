@@ -6,6 +6,12 @@ module.exports = {
   darkMode: ["class"],
   content: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
   theme: {
+    screens: {
+      '2xs': '180px',
+      'xs': '360px',
+      // Keep the default breakpoints by spreading tailwind defaults
+      ...require('tailwindcss/defaultTheme').screens,
+    },
     extend: {
       fontFamily: {
         sans: ["var(--font-geist-sans)", ...fontFamily.sans],
