@@ -77,11 +77,12 @@ export default function ChatPage() {
                     console.log("Received chat data update:", data);
                     
                     // Update chat state with messages from Firestore
+                    // BUT preserve the isLoading state - don't automatically set it to false
                     if (data?.messages) {
                         setChatState(prev => ({
                             ...prev,
-                            messages: data.messages,
-                            isLoading: false
+                            messages: data.messages
+                            // Don't update isLoading here! Let the AI response handlers control this
                         }));
                     }
                     
@@ -97,7 +98,7 @@ export default function ChatPage() {
                 setChatState(prev => ({
                     ...prev,
                     error: "Failed to receive message updates",
-                    isLoading: false
+                    isLoading: false  // Only set to false on error
                 }));
                 toast.error("Failed to receive message updates");
             }
@@ -116,11 +117,11 @@ export default function ChatPage() {
             
             const generateInitialResponse = async () => {
                 try {
-                    console.log("Generating initial AI response");
+                    console.log("Generating initial AI response - setting thinking state");
                     // Set loading state
                     setChatState(prev => ({
                         ...prev,
-                        isLoading: true
+                        isLoading: true  // This controls the thinking state
                     }));
                     
                     // Clear sessionStorage flags immediately
@@ -158,7 +159,11 @@ export default function ChatPage() {
                         updatedAt: new Date().toISOString()
                     });
                     
-                    // The onSnapshot listener will update the UI
+                    // Make sure to set isLoading to false when done
+                    setChatState(prev => ({
+                        ...prev,
+                        isLoading: false
+                    }));
                     
                 } catch (error) {
                     console.error("Error generating initial response:", error);
@@ -210,7 +215,18 @@ export default function ChatPage() {
 
             // Generate AI response
             aiService.setModel(selectedAI);
+            
+            // Enforce a minimum thinking time (at least 1 second)
+            const startTime = Date.now();
+            
+            // Generate the response
             const aiResponse = await aiService.generateResponse(userMessage.content);
+            
+            // Calculate elapsed time and add delay if necessary to show "thinking" for at least 1 second
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime < 1000) {
+                await new Promise(resolve => setTimeout(resolve, 1000 - elapsedTime));
+            }
 
             // Add AI response to Firestore
             const assistantMessage: Message = {
@@ -224,6 +240,12 @@ export default function ChatPage() {
                 messages: arrayUnion(assistantMessage),
                 updatedAt: new Date().toISOString()
             });
+            
+            // Now set isLoading to false
+            setChatState(prev => ({
+                ...prev,
+                isLoading: false
+            }));
 
         } catch (error) {
             console.error("Error:", error);

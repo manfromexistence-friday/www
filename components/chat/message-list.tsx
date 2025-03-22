@@ -19,7 +19,33 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
     const messagesList = Array.isArray(messages) ? messages : []
     const scrollAreaRef = React.useRef<HTMLDivElement>(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false)
-    const [showThinking, setShowThinking] = React.useState(false)
+    
+    // Use a ref to track the previous thinking state to help with debugging
+    const prevThinkingRef = React.useRef(isThinking)
+    
+    // Add delay to hide the thinking indicator for smoother transitions
+    const [delayedThinking, setDelayedThinking] = React.useState(isThinking || false)
+    
+    // Update thinking state with delay on hiding (more stable UI)
+    React.useEffect(() => {
+        // If previous state was different, log the change
+        if (prevThinkingRef.current !== isThinking) {
+            console.log(`Thinking state changed from ${prevThinkingRef.current} to ${isThinking}`)
+            prevThinkingRef.current = isThinking
+        }
+        
+        if (isThinking) {
+            // When thinking starts, show immediately
+            setDelayedThinking(true)
+        } else {
+            // When thinking stops, delay hiding slightly
+            const timeoutId = setTimeout(() => {
+                setDelayedThinking(false)
+            }, 500) // 500ms delay before hiding
+            
+            return () => clearTimeout(timeoutId)
+        }
+    }, [isThinking])
     
     // Track if user has scrolled up
     const handleScroll = React.useCallback(() => {
@@ -64,9 +90,9 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
 
     // Scroll on new messages or when thinking state changes
     React.useEffect(() => {
-        const timeoutId = setTimeout(() => scrollToBottom(true), isThinking ? 200 : 0)
+        const timeoutId = setTimeout(() => scrollToBottom(true), delayedThinking ? 200 : 0)
         return () => clearTimeout(timeoutId)
-    }, [messagesList.length, isThinking, scrollToBottom])
+    }, [messagesList.length, delayedThinking, scrollToBottom])
 
     // Add scroll event listener
     React.useEffect(() => {
@@ -77,11 +103,6 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
             return () => scrollContainer.removeEventListener('scroll', handleScroll)
         }
     }, [handleScroll])
-
-    // Update thinking state
-    React.useEffect(() => {
-        setShowThinking(isThinking ?? false)
-    }, [isThinking])
 
     return (
         <ScrollArea ref={scrollAreaRef} className="z-10 max-h-full flex-1 pt-12">
@@ -94,18 +115,21 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                         index={index}
                     />
                 ))}
-                {isThinking && (
-                    <div className="mt-2 flex w-full justify-start">
+                
+                {/* Use delayedThinking for smoother transitions */}
+                {delayedThinking && (
+                    <div className="mt-2 flex w-full justify-start transition-opacity duration-300 ease-in-out">
                         <div className="flex items-start gap-2">
-                            <div className="flex min-h-10 min-w-10 items-center justify-center rounded-full border">
-                                <Sparkles className="size-4" />
+                            <div className="flex min-h-10 min-w-10 items-center justify-center rounded-full border bg-background">
+                                <Sparkles className="size-4 animate-pulse" />
                             </div>
-                            <div className="hover:bg-primary-foreground text-muted-foreground relative rounded-xl rounded-tl-none border p-2 font-mono text-sm">
+                            <div className="hover:bg-primary-foreground bg-background text-foreground relative rounded-xl rounded-tl-none border p-3 font-mono text-sm">
                                 <AnimatedGradientText text="AI is thinking..." />
                             </div>
                         </div>
                     </div>
                 )}
+                
                 <div ref={messagesEndRef} className="h-2" />
             </div>
             <div className="h-[175px] w-full md:h-[115px]"></div>
