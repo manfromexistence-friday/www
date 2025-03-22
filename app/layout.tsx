@@ -84,7 +84,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       </head>
       <body
         className={cn(
-          "bg-background relative flex min-h-svh w-full flex-col font-sans antialiased",
+          "bg-background relative flex h-screen w-full flex-col font-sans antialiased",
           fontSans.variable,
           fontMono.variable
         )}

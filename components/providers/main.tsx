@@ -13,10 +13,9 @@ interface MainProps {
 export function Main({ children }: MainProps) {
   const { categorySidebarState } = useCategorySidebar()
   const { subCategorySidebarState } = useSubCategorySidebar()
-  const { state: leftSidebarState } = useSidebar()
 
   return (
-    <ScrollArea
+    <div
       className={cn(
         'no-scrollbar flex h-screen w-full flex-col overflow-y-auto transition-all duration-200 ease-linear md:pb-0',
         categorySidebarState === 'expanded' && 'pr-64',
@@ -24,6 +23,6 @@ export function Main({ children }: MainProps) {
       )}
     >
       {children}
-    </ScrollArea>
+    </div>
   )
 }

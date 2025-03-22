@@ -91,7 +91,7 @@ export function ChatInput({
   // Dynamically apply positioning classes based on keyboard visibility
   const positioningClasses = React.useMemo(() => {
     return isKeyboardVisible
-      ? "!fixed !bottom-2" // Position at bottom-1 when keyboard is visible
+      ? "fixed bottom-2" // Position at bottom-1 when keyboard is visible
       : "" // Default positioning
   }, [isKeyboardVisible])
 

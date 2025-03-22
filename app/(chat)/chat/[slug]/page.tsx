@@ -277,10 +277,10 @@ export default function ChatPage() {
 
     return (
         <div className={cn(
-            "relative flex h-[94vh] w-full flex-col transition-[left,right,width,margin-right] duration-200 ease-linear",
+            "relative flex min-h-full w-full flex-col transition-all duration-200 ease-linear",
         )}>
             {chatState.error && (
-                <div className="bg-destructive/90 absolute inset-x-0 top-0 z-50 p-2 text-center text-sm text-white">
+                <div className="bg-destructive/90 absolute inset-x-0 top-0 z-50 p-2 text-center text-sm">
                     {chatState.error}
                 </div>
             )}

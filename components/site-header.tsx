@@ -319,7 +319,7 @@ export function SiteHeader() {
             <Button
               variant="ghost"
               size="sm"
-              className="2xs:flex hover:bg-primary-foreground hover:text-primary hidden h-7 items-center justify-center gap-1.5 rounded-full border px-2"
+              className="2xs:flex hover:bg-primary-foreground hover:text-primary md:hidden h-7 items-center justify-center gap-1.5 rounded-full border px-2"
               disabled={isChangingVisibility}
             >
               {isChangingVisibility ? (
@@ -404,7 +404,7 @@ export function SiteHeader() {
       <div className="flex items-center">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <div className="mr-1 md:text-muted-foreground hover:text-primary flex size-8 items-center justify-center rounded-md border">
+            <div className="mr-1 md:text-muted-foreground hover:text-primary flex size-8 items-center justify-center rounded-md border md:hidden">
               <Menu className="size-4" />
             </div>
             {/* <Button variant="outline" size="icon" className="size-7 md:hidden">
@@ -441,7 +441,7 @@ export function SiteHeader() {
           </SidebarProvider>
         )}
 
-        <div className="hidden xs:flex hover:bg-primary-foreground !mr-1 h-8 items-center justify-center gap-1 rounded-md border px-1.5 md:mr-0">
+        <div className="mr-1 hidden xs:flex hover:bg-primary-foreground h-8 items-center justify-center gap-1 rounded-md border px-1.5 md:mr-0">
           <div
             onClick={handleCategorySidebarToggle}
             className="hover:bg-secondary flex size-6 items-center justify-center rounded-md"
