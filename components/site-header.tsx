@@ -369,7 +369,7 @@ export function SiteHeader() {
 
         // Left sidebar positioning (after md breakpoint)
         leftSidebarState === 'expanded'
-          ? 'md:left-64 md:w-[calc(100%-256px)]' // When left sidebar is expanded
+          ? 'md:left-64 w-[calc(100%-256px)]' // When left sidebar is expanded
           : 'md:left-12', // When collapsed
 
         // Width calculations based on sidebar states and viewport
@@ -377,50 +377,25 @@ export function SiteHeader() {
         leftSidebarState === 'expanded' &&
           categorySidebarState !== 'expanded' &&
           subCategorySidebarState !== 'expanded'
-          ? 'md:w-[calc(100%-256)]'
+          ? 'md:w-[calc(100%-256px)]'
           : '',
 
         // When left sidebar is expanded + category sidebar
         leftSidebarState === 'expanded' &&
           categorySidebarState === 'expanded' &&
           subCategorySidebarState !== 'expanded'
-          ? 'md:w-[calc(100%-64-64)]'
+          ? 'md:w-[calc(100%-256px)]'
           : '',
 
-        // When left sidebar is expanded + subcategory sidebar
+        // When left sidebar is expanded + subCategory sidebar
         leftSidebarState === 'expanded' &&
           categorySidebarState !== 'expanded' &&
           subCategorySidebarState === 'expanded'
-          ? 'md:w-[calc(100%-64-64)]'
+          ? 'md:w-[calc(100%-256px)] '
           : '',
 
-        // When left sidebar is expanded + both category and subcategory
-        leftSidebarState === 'expanded' &&
-          categorySidebarState === 'expanded' &&
-          subCategorySidebarState === 'expanded'
-          ? 'md:w-[calc(100%-64-128)]'
-          : '',
-
-        // When left sidebar is collapsed but category sidebar is expanded
-        leftSidebarState !== 'expanded' &&
-          categorySidebarState === 'expanded' &&
-          subCategorySidebarState !== 'expanded'
-          ? 'md:w-[calc(100%-12-64)]'
-          : '', // Adjusted for 12 left position
-
-        // When left sidebar is collapsed but subcategory sidebar is expanded
-        leftSidebarState !== 'expanded' &&
-          categorySidebarState !== 'expanded' &&
-          subCategorySidebarState === 'expanded'
-          ? 'md:w-[calc(100%-12-64)]'
-          : '', // Adjusted for 12 left position
-
-        // When left sidebar is collapsed but both category and subcategory expanded
-        leftSidebarState !== 'expanded' &&
-          categorySidebarState === 'expanded' &&
-          subCategorySidebarState === 'expanded'
-          ? 'md:w-[calc(100%-12-128)]'
-          : '', // Adjusted for 12 left position
+        categorySidebarState === 'expanded' ? 'w-[calc(100%-256px)]' : '',
+        subCategorySidebarState === 'expanded' ? 'w-[calc(100%-256px)]' : ''
       )}
     >
       {/* Header content */}
@@ -469,8 +444,10 @@ export function SiteHeader() {
           >
             <MessageCircle
               className={cn(
-                categorySidebarState === 'expanded' ? 'text-primary' : 'text-muted-foreground',
-                'hover:text-primary size-4'
+                categorySidebarState === 'expanded'
+                  ? 'md:text-primary'
+                  : 'md:text-muted-foreground',
+                'text-primary md:hover:text-primary size-4'
               )}
             />
           </div>
@@ -481,8 +458,10 @@ export function SiteHeader() {
           >
             <Type
               className={cn(
-                subCategorySidebarState === 'expanded' ? 'text-primary' : 'text-muted-foreground',
-                'hover:text-primary size-4'
+                'text-primary md:hover:text-primary size-4',
+                subCategorySidebarState === 'expanded'
+                  ? 'md:text-primary'
+                  : 'md:text-muted-foreground'
               )}
             />
           </div>
@@ -495,7 +474,12 @@ export function SiteHeader() {
                 <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
               </Avatar>
             ) : (
-              <Button variant="outline" size="sm" className="md:hidden" disabled={isLoggingIn}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="md:hidden md:text-muted-foreground md:hover:text-primary"
+                disabled={isLoggingIn}
+              >
                 {isLoggingIn ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
