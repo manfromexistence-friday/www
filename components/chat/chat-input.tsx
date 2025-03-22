@@ -96,7 +96,7 @@ export function ChatInput({
   }, [isKeyboardVisible])
 
   return (
-    <div className={cn('rounded-2xl border shadow-xl lg:w-1/2 w-[95%]', positioningClasses, className)}>
+    <div className={cn('rounded-2xl border shadow-xl xl:w-1/2 w-[95%]', positioningClasses, className)}>
       {imagePreview && (
         <ImagePreview
           imagePreview={imagePreview}

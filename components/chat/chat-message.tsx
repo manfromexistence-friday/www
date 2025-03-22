@@ -57,7 +57,7 @@ export function ChatMessage({ message, chatId, index }: ChatMessageProps) {
         </div>
       ) : (
         <div className="flex w-full items-center justify-end gap-2">
-          <div className="hover:bg-primary-foreground relativeborder flex min-h-10 items-center justify-center rounded-xl rounded-tr-none border p-2 font-mono text-sm">
+          <div className="hover:bg-primary-foreground hover:text-primary relative flex min-h-10 items-center justify-center rounded-xl rounded-tr-none border p-2 font-mono text-sm">
             <MarkdownPreview content={message.content} />
           </div>
           <Popover>

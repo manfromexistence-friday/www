@@ -1,6 +1,5 @@
-import React from "react"
+import React, { useLayoutEffect, useRef, useState, useCallback, useEffect } from "react"
 import { Message } from "@/types/chat"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChatMessage } from "@/components/chat/chat-message"
 import { Sparkles, ChevronDown } from "lucide-react"
 import AnimatedGradientText from "@/components/ui/animated-gradient-text"
@@ -17,24 +16,18 @@ interface MessageListProps {
 export function MessageList({ chatId, messages, messagesEndRef, isThinking }: MessageListProps) {
     // Use the messages passed from the parent directly
     const messagesList = Array.isArray(messages) ? messages : []
-    const scrollAreaRef = React.useRef<HTMLDivElement>(null)
-    const [showScrollButton, setShowScrollButton] = React.useState(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [showScrollButton, setShowScrollButton] = useState(false)
+    const prevMessagesLengthRef = useRef(messagesList.length)
     
-    // Use a ref to track the previous thinking state to help with debugging
-    const prevThinkingRef = React.useRef(isThinking)
-    const prevMessagesLengthRef = React.useRef(messagesList.length)
+    // Use a ref to track the previous thinking state for smoother transitions
+    const prevThinkingRef = useRef(isThinking)
     
     // Add delay to hide the thinking indicator for smoother transitions
-    const [delayedThinking, setDelayedThinking] = React.useState(isThinking || false)
+    const [delayedThinking, setDelayedThinking] = useState(isThinking || false)
     
-    // Update thinking state with delay on hiding (more stable UI)
-    React.useEffect(() => {
-        // If previous state was different, log the change
-        if (prevThinkingRef.current !== isThinking) {
-            console.log(`Thinking state changed from ${prevThinkingRef.current} to ${isThinking}`)
-            prevThinkingRef.current = isThinking
-        }
-        
+    // Handle the thinking state with delay on hiding
+    useEffect(() => {
         if (isThinking) {
             // When thinking starts, show immediately
             setDelayedThinking(true)
@@ -48,135 +41,76 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         }
     }, [isThinking])
     
-    // More robust scrollToBottom function
-    const scrollToBottom = React.useCallback((force = false) => {
-        console.log("Attempting to scroll to bottom");
+    // Simple scroll function that works with plain DOM
+    const scrollToBottom = useCallback(() => {
+        if (containerRef.current) {
+            const scrollHeight = containerRef.current.scrollHeight
+            containerRef.current.scrollTop = scrollHeight + 1000
+            setShowScrollButton(false)
+        }
+    }, [])
+    
+    // Check if we need to show the scroll button
+    const handleScroll = useCallback(() => {
+        if (containerRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = containerRef.current
+            const atBottom = scrollHeight - scrollTop - clientHeight < 100
+            setShowScrollButton(!atBottom)
+        }
+    }, [])
+    
+    // Scroll on new messages or thinking state changes - 
+    // useLayoutEffect happens before browser paint
+    useLayoutEffect(() => {
+        const messagesChanged = messagesList.length !== prevMessagesLengthRef.current
+        prevMessagesLengthRef.current = messagesList.length
         
-        // 1. Find all potential scroll containers
-        const scrollContainers = [
-            scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]'), // Radix ScrollArea
-            scrollAreaRef.current, // The ScrollArea itself
-            document.querySelector('.ScrollArea-viewport'), // Alternative Radix selector
-            document.querySelector('[data-radix-scroll-area-viewport]'), // Generic Radix selector
-            document.scrollingElement, // Document scrolling element
-            document.documentElement, // HTML element
-            document.body // Body element
-        ].filter(Boolean) as Element[];
-        
-        // If we found scroll containers, try to scroll them all
-        if (scrollContainers.length > 0) {
-            console.log(`Found ${scrollContainers.length} potential scroll containers`);
+        if (messagesChanged || isThinking !== prevThinkingRef.current) {
+            prevThinkingRef.current = isThinking
             
-            // Try to scroll each container
-            scrollContainers.forEach(container => {
-                try {
-                    container.scrollTop = container.scrollHeight;
-                    console.log("Applied scrollTop to container:", container);
-                } catch (e) {
-                    console.error("Failed to scroll container:", e);
-                }
-            });
+            // For best results, scroll immediately then again after a delay
+            scrollToBottom()
+            
+            // Multiple timeouts to ensure scroll after content renders
+            const timeouts = [10, 50, 100, 300, 500].map(delay => 
+                setTimeout(scrollToBottom, delay)
+            )
+            
+            return () => timeouts.forEach(clearTimeout)
         }
-        
-        // Also try scrollIntoView as a fallback
-        if (messagesEndRef.current) {
-            try {
-                messagesEndRef.current.scrollIntoView({ block: "end", behavior: "smooth" });
-                console.log("Applied scrollIntoView to messagesEndRef");
-            } catch (e) {
-                console.error("Failed to scrollIntoView:", e);
-            }
+    }, [messagesList.length, isThinking, scrollToBottom])
+    
+    // Add event listener for scroll
+    useEffect(() => {
+        const current = containerRef.current
+        if (current) {
+            current.addEventListener('scroll', handleScroll)
+            return () => current.removeEventListener('scroll', handleScroll)
         }
-        
-        // Hide the scroll button
-        setShowScrollButton(false);
-    }, [messagesEndRef]);
+    }, [handleScroll])
     
-    // Track scroll position to show/hide scroll button
-    const handleScroll = React.useCallback(() => {
-        const scrollContainers = [
-            scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]'),
-            scrollAreaRef.current,
-            document.querySelector('.ScrollArea-viewport'),
-            document.querySelector('[data-radix-scroll-area-viewport]')
-        ].filter(Boolean) as Element[];
-        
-        let isAtBottom = true;
-        
-        // Check if any container is not at the bottom
-        for (const container of scrollContainers) {
-            const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-            if (scrollBottom > 100) {
-                isAtBottom = false;
-                break;
-            }
-        }
-        
-        setShowScrollButton(!isAtBottom);
-    }, []);
-    
-    // Add scroll event listeners to all potential containers
-    React.useEffect(() => {
-        const scrollContainers = [
-            scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]'),
-            scrollAreaRef.current,
-            document.querySelector('.ScrollArea-viewport'),
-            document.querySelector('[data-radix-scroll-area-viewport]')
-        ].filter(Boolean) as Element[];
-        
-        scrollContainers.forEach(container => {
-            container.addEventListener('scroll', handleScroll);
-        });
-        
-        return () => {
-            scrollContainers.forEach(container => {
-                container.removeEventListener('scroll', handleScroll);
-            });
-        };
-    }, [handleScroll]);
-    
-    // Aggressive scroll on mount and when dependencies change
-    React.useEffect(() => {
-        // Calculate if messages were added
-        const messagesAdded = messagesList.length > prevMessagesLengthRef.current;
-        prevMessagesLengthRef.current = messagesList.length;
-        
-        // Scroll with a small delay to ensure content is rendered
-        const timeoutId = setTimeout(() => {
-            scrollToBottom(messagesAdded);
-        }, 100);
-        
-        // Scroll again after a longer delay (for images or slow rendering content)
-        const secondTimeoutId = setTimeout(() => {
-            scrollToBottom(false);
-        }, 500);
-        
-        return () => {
-            clearTimeout(timeoutId);
-            clearTimeout(secondTimeoutId);
-        };
-    }, [messagesList.length, delayedThinking, scrollToBottom]);
-    
-    // Additional scroll on window resize (helps with keyboard appearance)
-    React.useEffect(() => {
+    // Special effect to scroll when window resizes (helps with keyboard)
+    useEffect(() => {
         const handleResize = () => {
-            // Delay to let the keyboard animation complete
-            setTimeout(() => scrollToBottom(true), 300);
-        };
+            setTimeout(scrollToBottom, 100)
+        }
         
-        window.addEventListener('resize', handleResize);
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
-    }, [scrollToBottom]);
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [scrollToBottom])
+    
+    // Force initial scroll after mounting
+    useEffect(() => {
+        scrollToBottom()
+    }, [scrollToBottom])
 
     return (
-        <ScrollArea 
-            ref={scrollAreaRef} 
-            className="z-10 h-full flex-1 pt-12"
-            onScrollCapture={handleScroll}
+        <div 
+            ref={containerRef}
+            className="flex-1 overflow-y-auto h-full pt-16 pb-32 md:pb-14 px-1 relative"
+            style={{ scrollBehavior: 'smooth' }}
         >
-            <div className="w-full space-y-2.5 px-2 pt-3.5 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2">
+            <div className="w-full space-y-3 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2 md:px-4">
                 {messagesList.map((message, index) => (
                     <ChatMessage
                         key={`${message.id || index}-${message.timestamp}`}
@@ -186,14 +120,14 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                     />
                 ))}
                 
-                {/* Use delayedThinking for smoother transitions */}
+                {/* Thinking indicator */}
                 {delayedThinking && (
-                    <div className="mt-2 flex w-full justify-start transition-opacity duration-300 ease-in-out">
+                    <div className="mt-2 flex w-full justify-start transition-all duration-300">
                         <div className="flex items-start gap-2">
                             <div className="flex min-h-10 min-w-10 items-center justify-center rounded-full border bg-background">
                                 <Sparkles className="size-4 animate-pulse" />
                             </div>
-                            <div className="hover:bg-primary-foreground bg-background text-foreground relative rounded-xl rounded-tl-none p-3 font-mono text-sm">
+                            <div className="bg-background text-foreground relative rounded-xl rounded-tl-none p-3 font-mono text-sm shadow-sm">
                                 <AnimatedGradientText text="AI is thinking..." />
                             </div>
                         </div>
@@ -201,22 +135,21 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                 )}
                 
                 {/* This element is used for scrolling to bottom */}
-                <div ref={messagesEndRef} id="messages-end" className="h-4 w-full" />
+                <div ref={messagesEndRef} className="h-20 w-full"></div>
             </div>
-            {/* Extra space at bottom to prevent content being hidden behind input */}
-            <div className="h-[175px] w-full md:h-[115px]"></div>
-            {/* Scroll to bottom button - more visible and better positioned */}
+
+            {/* Scroll button - made larger and more visible */}
             <Button
-                onClick={() => scrollToBottom(true)}
+                onClick={scrollToBottom}
                 className={cn(
-                    "fixed bottom-48 right-4 z-[1001] h-10 w-10 rounded-full p-0 shadow-md transition-all duration-200 md:bottom-28",
+                    "fixed bottom-48 md:bottom-36 lg:bottom-[135px] md:right-[3%] xl:right-[24.5%] xl:bottom-36 lg:right-[2.5%] right-4 z-[1001] h-12 w-12 rounded-full p-0 shadow-lg transition-all duration-300",
                     showScrollButton ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
                 )}
                 size="icon"
-                variant="secondary"
+                variant="outline"
             >
-                <ChevronDown className="h-5 w-5" />
+                <ChevronDown className="h-6 w-6" />
             </Button>
-        </ScrollArea>
+        </div>
     )
 }
