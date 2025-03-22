@@ -63,7 +63,7 @@ export function CategoryRightSidebar({ className }: { className?: string }) {
   const { categorySidebarState } = useCategorySidebar()
   // useSubCategorySidebar()
   return (
-    <CategorySidebar className={cn(className, "z-[1000] !bg-background")} side="right">
+    <CategorySidebar className={cn(className, "!bg-background z-[1000]")} side="right">
       <CategorySidebarHeader>
         <div className="space-y-2">
           <div className="relative">

@@ -361,15 +361,15 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        'bg-background fixed top-0 flex h-12 items-center justify-between border-b pl-2 pr-1.5 z-40',
+        'bg-background fixed top-0 z-40 flex h-12 items-center justify-between border-b pl-2 pr-1.5',
         // Add transition for smooth changes
         'transition-all duration-200 ease-linear',
         // Base width and position - full width on mobile, default md width with 48px offset
-        'w-full left-0 md:w-[calc(100%-48px)]',
+        'left-0 w-full md:w-[calc(100%-48px)]',
 
         // Left sidebar positioning (after md breakpoint)
         leftSidebarState === 'expanded'
-          ? 'md:left-64 w-[calc(100%-256px)]' // When left sidebar is expanded
+          ? 'w-[calc(100%-256px)] md:left-64' // When left sidebar is expanded
           : 'md:left-12', // When collapsed
 
         // Width calculations based on sidebar states and viewport
@@ -469,7 +469,7 @@ export function SiteHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             {user ? (
-              <Avatar className="size-7 rounded-lg md:hidden cursor-pointer">
+              <Avatar className="size-7 cursor-pointer rounded-lg md:hidden">
                 <AvatarImage src={userImage ?? undefined} alt={userName || 'User'} />
                 <AvatarFallback className="rounded-lg">{fallbackInitial}</AvatarFallback>
               </Avatar>
@@ -477,13 +477,13 @@ export function SiteHeader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="md:hidden md:text-muted-foreground md:hover:text-primary"
+                className="md:text-muted-foreground md:hover:text-primary md:hidden"
                 disabled={isLoggingIn}
               >
                 {isLoggingIn ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : (
-                  <Key className="mr-2 h-4 w-4" />
+                  <Key className="mr-2 size-4" />
                 )}
                 Sign in
               </Button>
@@ -512,51 +512,51 @@ export function SiteHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 size-4" />
                     Upgrade to Pro
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
-                    <BadgeCheck className="mr-2 h-4 w-4" />
+                    <BadgeCheck className="mr-2 size-4" />
                     Account
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <CreditCard className="mr-2 h-4 w-4" />
+                    <CreditCard className="mr-2 size-4" />
                     Billing
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Bell className="mr-2 h-4 w-4" />
+                    <Bell className="mr-2 size-4" />
                     Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </>
             ) : (
               <DropdownMenuItem onClick={handleLogin} disabled={isLoggingIn}>
-                <Key className="mr-2 h-4 w-4" />
+                <Key className="mr-2 size-4" />
                 {isLoggingIn ? 'Signing in...' : 'Sign in with Google'}
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={toggleTheme}>
               {theme === 'light' ? (
-                <MoonIcon className="mr-2 h-4 w-4" />
+                <MoonIcon className="mr-2 size-4" />
               ) : (
-                <SunIcon className="mr-2 h-4 w-4" />
+                <SunIcon className="mr-2 size-4" />
               )}
               {theme === 'light' ? 'Dark' : 'Light'} Mode
             </DropdownMenuItem>
             {user && (
               <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="mr-2 size-4" />
                 {isLoggingOut ? 'Logging out...' : 'Log out'}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
         {/* Remove any margin from the right sidebars */}
-        <div className="flex items-center gap-0 space-x-0 m-0 p-0">
+        <div className="m-0 flex items-center gap-0 space-x-0 p-0">
           <CategoryRightSidebar className="m-0 p-0" />
           <SubCategoryRightSidebar className="m-0 p-0" />
         </div>
