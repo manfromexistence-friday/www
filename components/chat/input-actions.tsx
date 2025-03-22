@@ -1,25 +1,9 @@
-"use client"
+'use client'
 
-import * as React from "react"
-import { useEffect, useId, useState, ElementType } from "react"
-import Link from "next/link"
-import { ais, data } from "@/data"
-import { aiService } from "@/lib/services/ai-service"
-import { Tooltip } from "antd"
-import {
-  Check,
-  ChevronDown,
-  CircleSlash2,
-  Ellipsis,
-  Home,
-  LibraryBig,
-  LoaderCircle,
-  MessageCircle,
-  Mic,
-  Search,
-  Sparkles,
-  Type,
-} from "lucide-react"
+import * as React from 'react'
+import { ais, data } from '@/data'
+import { aiService } from '@/lib/services/ai-service'
+import { Check, ChevronDown } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -27,42 +11,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { SidebarProvider } from "@/components/sidebar/actions-sidebar"
-import {
-  CategorySidebar,
-  CategorySidebarContent,
-  CategorySidebarFooter,
-  CategorySidebarHeader,
-  CategorySidebarMenuButton,
-  useCategorySidebar,
-} from "@/components/sidebar/category-sidebar"
-import { NavFavorites } from "@/components/sidebar/favorites"
-import { NavActions } from "@/components/sidebar/nav-actions"
-import {
-  SubCategorySidebar,
-  SubCategorySidebarContent,
-  SubCategorySidebarFooter,
-  SubCategorySidebarHeader,
-  SubCategorySidebarMenuButton,
-  useSubCategorySidebar,
-} from "@/components/sidebar/sub-category-sidebar"
-import { Switch } from "../ui/switch"
-import { categoryItems, subCategoryItems } from "@/data/sidebar-items"
-import * as Icons from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Globe, Paperclip, Send, CircleDotDashed } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
+import { Globe, Paperclip, Send, CircleDotDashed } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
 interface InputActionsProps {
   isLoading: boolean
@@ -89,7 +44,7 @@ export function InputActions({
   onSearchToggle,
   onResearchToggle,
   onImageUpload,
-  onAIChange // New prop
+  onAIChange, // New prop
 }: InputActionsProps) {
   const [aiOpen, setAiOpen] = React.useState(false)
 
@@ -105,9 +60,7 @@ export function InputActions({
               className="bg-primary-foreground hover:bg-secondary h-8 w-full md:w-[200px] min-w-[50px] sm:min-w-[150px] md:min-w-[180px] justify-between px-2 text-xs"
             >
               <span className="truncate text-start flex-1 mr-1">
-                {selectedAI
-                  ? ais.find((ai) => ai.value === selectedAI)?.label
-                  : "Gemini 2.0 Flash"}
+                {selectedAI ? ais.find((ai) => ai.value === selectedAI)?.label : 'Gemini 2.0 Flash'}
               </span>
               <ChevronDown className="opacity-50 flex-shrink-0" />
             </Button>
@@ -125,17 +78,17 @@ export function InputActions({
                         key={ai.value}
                         value={ai.value}
                         onSelect={(currentValue) => {
-                          const newValue = currentValue === selectedAI ? "" : currentValue;
-                          onAIChange(newValue);
-                          aiService.setModel(newValue || "gemini-2.0-flash");
-                          setAiOpen(false);
+                          const newValue = currentValue === selectedAI ? '' : currentValue
+                          onAIChange(newValue)
+                          aiService.setModel(newValue || 'gemini-2.0-flash')
+                          setAiOpen(false)
                         }}
                       >
                         <span className="truncate max-w-full w-[20px] flex-1">{ai.label}</span>
                         <Check
                           className={cn(
-                            "ml-auto",
-                            selectedAI === ai.value ? "opacity-100" : "opacity-0"
+                            'ml-auto',
+                            selectedAI === ai.value ? 'opacity-100' : 'opacity-0'
                           )}
                         />
                       </CommandItem>
@@ -147,7 +100,7 @@ export function InputActions({
           </PopoverContent>
         </Popover>
       </div>
-      
+
       {/* Rest of the component (buttons on right) remains the same */}
       <div className="absolute bottom-3 right-3 flex items-center gap-1">
         {/* Research Button */}
@@ -156,9 +109,11 @@ export function InputActions({
           onClick={onResearchToggle}
           disabled={isLoading}
           className={cn(
-            "flex h-8 items-center gap-2 rounded-full border px-1.5 py-1 transition-all",
-            showResearch ? "bg-background text-muted-foreground hover:text-primary border" : "border-transparent",
-            isLoading && "cursor-not-allowed opacity-50"
+            'flex h-8 items-center gap-2 rounded-full border px-1.5 py-1 transition-all',
+            showResearch
+              ? 'bg-background text-muted-foreground hover:text-primary border'
+              : 'border-transparent',
+            isLoading && 'cursor-not-allowed opacity-50'
           )}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -173,22 +128,24 @@ export function InputActions({
               scale: 1.1,
             }}
             transition={{
-              type: "spring",
+              type: 'spring',
               stiffness: 260,
               damping: 25,
             }}
           >
-            <CircleDotDashed className={cn(
-              "size-4",
-              showResearch ? "text-primary" : "text-muted-foreground",
-              isLoading && "opacity-50"
-            )} />
+            <CircleDotDashed
+              className={cn(
+                'size-4',
+                showResearch ? 'text-primary' : 'text-muted-foreground',
+                isLoading && 'opacity-50'
+              )}
+            />
           </motion.div>
           <AnimatePresence>
             {showResearch && (
               <motion.span
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "auto", opacity: 1 }}
+                animate={{ width: 'auto', opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 className="text-primary shrink-0 overflow-hidden whitespace-nowrap text-[11px]"
@@ -205,9 +162,11 @@ export function InputActions({
           onClick={onSearchToggle}
           disabled={isLoading}
           className={cn(
-            "flex h-8 items-center gap-1 rounded-full border px-2 py-0.5 transition-all",
-            showSearch ? "bg-background text-muted-foreground hover:text-primary border" : "border-transparent",
-            isLoading && "cursor-not-allowed opacity-50"
+            'flex h-8 items-center gap-1 rounded-full border px-2 py-0.5 transition-all',
+            showSearch
+              ? 'bg-background text-muted-foreground hover:text-primary border'
+              : 'border-transparent',
+            isLoading && 'cursor-not-allowed opacity-50'
           )}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -222,22 +181,24 @@ export function InputActions({
               scale: 1.1,
             }}
             transition={{
-              type: "spring",
+              type: 'spring',
               stiffness: 260,
               damping: 25,
             }}
           >
-            <Globe className={cn(
-              "size-4",
-              showSearch ? "text-primary" : "text-muted-foreground",
-              isLoading && "opacity-50"
-            )} />
+            <Globe
+              className={cn(
+                'size-4',
+                showSearch ? 'text-primary' : 'text-muted-foreground',
+                isLoading && 'opacity-50'
+              )}
+            />
           </motion.div>
           <AnimatePresence>
             {showSearch && (
               <motion.span
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "auto", opacity: 1 }}
+                animate={{ width: 'auto', opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 className="text-primary shrink-0 overflow-hidden whitespace-nowrap text-[11px]"
@@ -249,20 +210,21 @@ export function InputActions({
         </motion.button>
 
         {/* File Upload Button */}
-        <label className={cn(
-          "relative cursor-pointer rounded-full p-2",
-          imagePreview ? "bg-background text-primary border" : "text-muted-foreground",
-          isLoading && "cursor-not-allowed opacity-50"
-        )}>
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Paperclip className={cn(
-              "text-muted-foreground hover:text-primary size-4 transition-colors",
-              imagePreview && "text-primary",
-              isLoading && "opacity-50"
-            )} />
+        <label
+          className={cn(
+            'relative cursor-pointer rounded-full p-2',
+            imagePreview ? 'bg-background text-primary border' : 'text-muted-foreground',
+            isLoading && 'cursor-not-allowed opacity-50'
+          )}
+        >
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <Paperclip
+              className={cn(
+                'text-muted-foreground hover:text-primary size-4 transition-colors',
+                imagePreview && 'text-primary',
+                isLoading && 'opacity-50'
+              )}
+            />
             <input
               type="file"
               className="hidden"
@@ -275,15 +237,17 @@ export function InputActions({
             />
           </motion.div>
         </label>
-        
+
         {/* Send Button */}
         <motion.button
           type="button"
           onClick={onSubmit}
           disabled={!value.trim() || isLoading}
           className={cn(
-            "text-muted-foreground hover:text-primary rounded-full p-2 transition-colors",
-            value && !isLoading ? "text-primary" : "text-muted-foreground cursor-not-allowed opacity-50"
+            'text-muted-foreground hover:text-primary rounded-full p-2 transition-colors',
+            value && !isLoading
+              ? 'text-primary'
+              : 'text-muted-foreground cursor-not-allowed opacity-50'
           )}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
