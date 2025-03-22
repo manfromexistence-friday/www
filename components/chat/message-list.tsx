@@ -107,10 +107,10 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
     return (
         <div 
             ref={containerRef}
-            className="flex-1 overflow-y-auto h-full pt-16 pb-32 md:pb-14 px-1 relative"
+            className="relative h-full flex-1 overflow-y-auto px-1 pb-32 pt-16 md:pb-14"
             style={{ scrollBehavior: 'smooth' }}
         >
-            <div className="w-full space-y-3 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2 md:px-4">
+            <div className="w-full space-y-3 md:px-4 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2">
                 {messagesList.map((message, index) => (
                     <ChatMessage
                         key={`${message.id || index}-${message.timestamp}`}
@@ -124,7 +124,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                 {delayedThinking && (
                     <div className="mt-2 flex w-full justify-start transition-all duration-300">
                         <div className="flex items-start gap-2">
-                            <div className="flex min-h-10 min-w-10 items-center justify-center rounded-full border bg-background">
+                            <div className="bg-background flex min-h-10 min-w-10 items-center justify-center rounded-full border">
                                 <Sparkles className="size-4 animate-pulse" />
                             </div>
                             <div className="bg-background text-foreground relative rounded-xl rounded-tl-none p-3 font-mono text-sm shadow-sm">
@@ -142,13 +142,13 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
             <Button
                 onClick={scrollToBottom}
                 className={cn(
-                    "fixed bottom-48 md:bottom-36 lg:bottom-[135px] md:right-[3%] xl:right-[24.5%] xl:bottom-36 lg:right-[2.5%] right-4 z-[1001] h-12 w-12 rounded-full p-0 shadow-lg transition-all duration-300",
-                    showScrollButton ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+                    "fixed bottom-48 right-4 z-[1001] size-12 rounded-full p-0 shadow-lg transition-all duration-300 md:bottom-36 md:right-[3%] lg:bottom-[135px] lg:right-[2.5%] xl:bottom-36 xl:right-[24.5%]",
+                    showScrollButton ? "scale-100 opacity-100" : "pointer-events-none scale-75 opacity-0"
                 )}
                 size="icon"
                 variant="outline"
             >
-                <ChevronDown className="h-6 w-6" />
+                <ChevronDown className="size-6" />
             </Button>
         </div>
     )

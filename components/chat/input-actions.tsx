@@ -50,19 +50,19 @@ export function InputActions({
 
   return (
     <div className="mt-2 h-12 rounded-b-xl">
-      <div className="absolute bottom-3 left-3 flex items-center gap-1 max-w-[50%]">
+      <div className="absolute bottom-3 left-3 flex max-w-[50%] items-center gap-1">
         <Popover open={aiOpen} onOpenChange={setAiOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
               aria-expanded={aiOpen}
-              className="bg-primary-foreground hover:bg-secondary h-8 w-full md:w-[200px] min-w-[50px] sm:min-w-[150px] md:min-w-[180px] justify-between px-2 text-xs"
+              className="bg-primary-foreground hover:bg-secondary h-8 w-full min-w-[50px] justify-between px-2 text-xs sm:min-w-[150px] md:w-[200px] md:min-w-[180px]"
             >
-              <span className="truncate text-start flex-1 mr-1">
+              <span className="mr-1 flex-1 truncate text-start">
                 {selectedAI ? ais.find((ai) => ai.value === selectedAI)?.label : 'Gemini 2.0 Flash'}
               </span>
-              <ChevronDown className="opacity-50 flex-shrink-0" />
+              <ChevronDown className="shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="z-[100000] mr-2 w-[var(--radix-popover-trigger-width)] p-0 text-xs">
@@ -71,7 +71,7 @@ export function InputActions({
               <CommandList className="overflow-hidden">
                 <CommandEmpty>No ai found.</CommandEmpty>
                 <CommandGroup className="px-0">
-                  <ScrollArea className="max-h-[300px] h-max px-1.5">
+                  <ScrollArea className="h-max max-h-[300px] px-1.5">
                     {ais.map((ai) => (
                       <CommandItem
                         className="text-xs"
@@ -84,7 +84,7 @@ export function InputActions({
                           setAiOpen(false)
                         }}
                       >
-                        <span className="truncate max-w-full w-[20px] flex-1">{ai.label}</span>
+                        <span className="w-[20px] max-w-full flex-1 truncate">{ai.label}</span>
                         <Check
                           className={cn(
                             'ml-auto',

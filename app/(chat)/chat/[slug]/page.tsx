@@ -105,7 +105,7 @@ export default function ChatPage() {
         );
         
         return () => unsubscribe();
-    }, [sessionId]);
+    }, [sessionId, selectedAI]);
 
     // Generate AI response for initial message when page loads
     useEffect(() => {
@@ -291,7 +291,7 @@ export default function ChatPage() {
                 isThinking={chatState.isLoading}
             />
             <ChatInput
-                className="absolute left-1/2 z-50 -translate-x-1/2 bottom-14 md:bottom-2"
+                className="absolute bottom-14 left-1/2 z-50 -translate-x-1/2 md:bottom-2"
                 value={value}
                 chatState={chatState}
                 setChatState={setChatState}
