@@ -20,8 +20,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
     const [showScrollButton, setShowScrollButton] = useState(false)
     const prevMessagesLengthRef = useRef(messagesList.length)
     
-    // Instead of trying to coordinate transitions, use a hybrid approach
-    // This will explicitly manage multiple states
+    // State for managing thinking indicator and message display
     const [thinkingVisible, setThinkingVisible] = useState(isThinking || false)
     const [thinkingAnimatedIn, setThinkingAnimatedIn] = useState(isThinking || false)
     const [latestMessages, setLatestMessages] = useState(messagesList)
@@ -49,7 +48,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         }
     }, [])
     
-    // Handle thinking indicator state changes
+    // Critical effect: Handle thinking indicator and message sequencing
     useEffect(() => {
         // Clean up any existing timers to prevent race conditions
         if (thinkingTransitionTimer.current) {
@@ -62,43 +61,42 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
             messageUpdateTimer.current = null
         }
         
-        // PHASE 1: Show thinking indicator
+        // PHASE 1: Show thinking indicator when AI starts thinking
         if (isThinking && !thinkingVisible) {
-            // Immediately make the thinking indicator visible but not animated in
+            console.log("AI started thinking, showing indicator")
             setThinkingVisible(true)
-            // After a tiny delay, animate it in (this ensures the DOM element exists first)
             thinkingTransitionTimer.current = setTimeout(() => {
                 setThinkingAnimatedIn(true)
             }, 16) // One frame delay
         } 
         
-        // PHASE 2: Hide thinking indicator
+        // PHASE 2: AI stopped thinking - carefully sequence hiding indicator then showing response
         else if (!isThinking && thinkingVisible) {
-            // First animate it out
+            console.log("AI stopped thinking, hiding indicator")
+            
+            // 1. First fade out the indicator
             setThinkingAnimatedIn(false)
             
-            // After animation completes, remove from DOM
+            // 2. After fade completes, remove indicator completely
             thinkingTransitionTimer.current = setTimeout(() => {
                 setThinkingVisible(false)
                 
-                // If thinking just stopped (wasThinking=true), update messages after a delay
-                if (wasThinking.current) {
-                    messageUpdateTimer.current = setTimeout(() => {
-                        setLatestMessages([...messagesList])
-                    }, 100) // Short delay to prevent visual overlap
-                }
-            }, 400) // Match with animation duration
+                // 3. Only after indicator is fully removed, update messages with AI response
+                messageUpdateTimer.current = setTimeout(() => {
+                    console.log("Showing new messages after indicator removed")
+                    setLatestMessages([...messagesList])
+                }, 150) // Delay before showing response
+                
+            }, 500) // Ensure fadeout animation completes
         }
         
-        // PHASE 3: Update messages during thinking
-        else if (isThinking) {
-            // While thinking, always keep messages in sync
+        // PHASE 3: Update messages while thinking (for streaming responses)
+        else if (isThinking && thinkingVisible) {
             setLatestMessages([...messagesList])
         }
         
-        // PHASE 4: Update messages in normal state (not transitioning from thinking)
+        // PHASE 4: Normal updates when not in transition
         else if (!wasThinking.current && !isThinking) {
-            // Normal updates - just sync messages
             setLatestMessages([...messagesList])
         }
         
@@ -118,14 +116,10 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         prevMessagesLengthRef.current = latestMessages.length
         
         if (messagesChanged) {
-            // For best results, scroll immediately then again after a delay
             scrollToBottom()
-            
-            // Multiple timeouts to ensure scroll after content renders
             const timeouts = [10, 50, 100, 300, 500].map(delay => 
                 setTimeout(scrollToBottom, delay)
             )
-            
             return () => timeouts.forEach(clearTimeout)
         }
     }, [latestMessages.length, scrollToBottom])
@@ -139,7 +133,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         }
     }, [handleScroll])
     
-    // Special effect to scroll when window resizes (helps with keyboard)
+    // Resize handler
     useEffect(() => {
         const handleResize = () => {
             setTimeout(scrollToBottom, 100)
@@ -149,7 +143,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         return () => window.removeEventListener('resize', handleResize)
     }, [scrollToBottom])
     
-    // Force initial scroll after mounting
+    // Initial scroll
     useEffect(() => {
         scrollToBottom()
     }, [scrollToBottom])
@@ -161,7 +155,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
             style={{ scrollBehavior: 'smooth' }}
         >
             <div className="w-full space-y-3 md:px-4 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2">
-                {/* Render controlled message list - completely separate from thinking indicator */}
+                {/* Render message list */}
                 {latestMessages.map((message, index) => (
                     <ChatMessage
                         key={`${message.id || index}-${message.timestamp}`}
@@ -171,31 +165,31 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                     />
                 ))}
                 
+                {/* Thinking indicator - back in the message flow */}
+                {thinkingVisible && (
+                    <div 
+                        className={cn(
+                            "mt-2 flex w-full justify-start transition-all duration-400",
+                            thinkingAnimatedIn ? "opacity-100" : "opacity-0"
+                        )}
+                        aria-hidden={!isThinking}
+                    >
+                        <div className="flex items-start gap-2">
+                            <div className="bg-background flex min-h-10 min-w-10 items-center justify-center rounded-full border">
+                                <Sparkles className="size-4 animate-pulse" />
+                            </div>
+                            <div className="bg-background text-foreground relative rounded-xl rounded-tl-none border p-3 font-mono text-sm">
+                                <AnimatedGradientText text="AI is thinking..." />
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
                 {/* This element is used for scrolling to bottom */}
                 <div ref={messagesEndRef} className="h-20 w-full"></div>
             </div>
-            
-            {/* ⚠️ CRITICAL CHANGE: Thinking indicator is now outside message flow, absolutely positioned */}
-            {thinkingVisible && (
-                <div 
-                    className={cn(
-                        "fixed z-10 bottom-36 left-1/2 transform -translate-x-1/2 w-full max-w-[90%] xl:max-w-[50%] transition-all duration-400",
-                        thinkingAnimatedIn ? "opacity-100" : "opacity-0"
-                    )}
-                    aria-hidden={!isThinking}
-                >
-                    <div className="flex items-start gap-2 bg-background border rounded-xl shadow-md p-2">
-                        <div className="bg-background flex min-h-10 min-w-10 items-center justify-center rounded-full border">
-                            <Sparkles className="size-4 animate-pulse" />
-                        </div>
-                        <div className="bg-background text-foreground relative p-3 font-mono text-sm">
-                            <AnimatedGradientText text="AI is thinking..." />
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* Scroll button - made larger and more visible */}
+            {/* Scroll button */}
             <Button
                 onClick={scrollToBottom}
                 className={cn(
