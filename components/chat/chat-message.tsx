@@ -11,7 +11,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { MarkdownPreview } from './markdown-preview'
+import { MarkdownPreview } from "./markdown-preview"
+import AnimatedGradientText from "@/components/ui/animated-gradient-text"
 
 interface ChatMessageProps {
   message: Message
@@ -23,19 +24,35 @@ export function ChatMessage({ message, chatId, index }: ChatMessageProps) {
   const { user } = useAuth()
   const isAssistant = message.role === "assistant"
 
-  // Firebase user photoURL, displayName and email are used directly
   const userImage = (user as FirebaseUser)?.photoURL
   const userName = (user as FirebaseUser)?.displayName
   const userEmail = (user as FirebaseUser)?.email
-
-  // Get the first character for the fallback
   const fallbackInitial = userName?.[0] || userEmail?.[0]?.toUpperCase() || "U"
 
+  // If this is our "thinking" indicator placeholder
+  if (isAssistant && message.content === "thinking") {
+    return (
+      <div className="flex w-full justify-start">
+        <div className="flex w-full items-start gap-2 mt-2">
+          <div className="bg-background flex min-h-10 min-w-10 items-center justify-center rounded-full border">
+            <Sparkles className="size-4 animate-pulse" />
+          </div>
+          <div className="bg-background text-foreground relative rounded-xl rounded-tl-none border p-3 font-mono text-sm transition-opacity duration-500">
+            <AnimatedGradientText text="AI is thinking..." />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Regular assistant or user message display
   return (
-    <div className={cn(
-      "flex w-full gap-0",
-      isAssistant ? "justify-start" : "justify-end"
-    )}>
+    <div
+      className={cn(
+        "flex w-full gap-0",
+        isAssistant ? "justify-start" : "justify-end"
+      )}
+    >
       {isAssistant ? (
         <div className="flex w-full items-start gap-2">
           <Popover>
