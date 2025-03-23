@@ -22,13 +22,11 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
     
     // State for managing thinking indicator and message display
     const [thinkingVisible, setThinkingVisible] = useState(isThinking || false)
-    const [thinkingAnimatedIn, setThinkingAnimatedIn] = useState(isThinking || false)
     const [latestMessages, setLatestMessages] = useState(messagesList)
     
     // Track when thinking status changes
     const wasThinking = useRef(isThinking)
-    const thinkingTransitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const messageUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     
     // Simple scroll function that works with plain DOM
     const scrollToBottom = useCallback(() => {
@@ -48,67 +46,40 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
         }
     }, [])
     
-    // Critical effect: Handle thinking indicator and message sequencing
+    // Effect to handle thinking state and message updates
     useEffect(() => {
-        // Clean up any existing timers to prevent race conditions
-        if (thinkingTransitionTimer.current) {
-            clearTimeout(thinkingTransitionTimer.current)
-            thinkingTransitionTimer.current = null
+        // Clear any existing timers to prevent race conditions
+        if (responseTimer.current) {
+            clearTimeout(responseTimer.current)
+            responseTimer.current = null
         }
         
-        if (messageUpdateTimer.current) {
-            clearTimeout(messageUpdateTimer.current)
-            messageUpdateTimer.current = null
-        }
-        
-        // PHASE 1: Show thinking indicator when AI starts thinking
-        if (isThinking && !thinkingVisible) {
-            console.log("AI started thinking, showing indicator")
+        // Show thinking indicator immediately when AI starts thinking
+        if (isThinking) {
             setThinkingVisible(true)
-            thinkingTransitionTimer.current = setTimeout(() => {
-                setThinkingAnimatedIn(true)
-            }, 16) // One frame delay
         } 
         
-        // PHASE 2: AI stopped thinking - carefully sequence hiding indicator then showing response
-        else if (!isThinking && thinkingVisible) {
-            console.log("AI stopped thinking, hiding indicator")
+        // When AI stops thinking, hide the indicator before showing the response
+        else if (wasThinking.current && !isThinking) {
+            setThinkingVisible(false)
             
-            // 1. First fade out the indicator
-            setThinkingAnimatedIn(false)
-            
-            // 2. After fade completes, remove indicator completely
-            thinkingTransitionTimer.current = setTimeout(() => {
-                setThinkingVisible(false)
-                
-                // 3. Only after indicator is fully removed, update messages with AI response
-                messageUpdateTimer.current = setTimeout(() => {
-                    console.log("Showing new messages after indicator removed")
-                    setLatestMessages([...messagesList])
-                }, 150) // Delay before showing response
-                
-            }, 500) // Ensure fadeout animation completes
-        }
+            // Wait for the indicator to be removed before showing the response
+            responseTimer.current = setTimeout(() => {
+                setLatestMessages([...messagesList])
+            }, 500) // Delay to ensure indicator is fully removed
+        } 
         
-        // PHASE 3: Update messages while thinking (for streaming responses)
-        else if (isThinking && thinkingVisible) {
+        // Normal updates when not in transition
+        else {
             setLatestMessages([...messagesList])
         }
         
-        // PHASE 4: Normal updates when not in transition
-        else if (!wasThinking.current && !isThinking) {
-            setLatestMessages([...messagesList])
-        }
-        
-        // Update wasThinking reference for the next cycle
         wasThinking.current = isThinking
         
-        // Clean up timers on unmount or before next effect
         return () => {
-            if (thinkingTransitionTimer.current) clearTimeout(thinkingTransitionTimer.current)
-            if (messageUpdateTimer.current) clearTimeout(messageUpdateTimer.current)
+            if (responseTimer.current) clearTimeout(responseTimer.current)
         }
-    }, [isThinking, messagesList, thinkingVisible])
+    }, [isThinking, messagesList])
     
     // Scroll on new messages
     useLayoutEffect(() => {
@@ -168,10 +139,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                 {/* Thinking indicator - back in the message flow */}
                 {thinkingVisible && (
                     <div 
-                        className={cn(
-                            "mt-2 flex w-full justify-start transition-all duration-400",
-                            thinkingAnimatedIn ? "opacity-100" : "opacity-0"
-                        )}
+                        className="mt-2 flex w-full justify-start transition-opacity duration-500"
                         aria-hidden={!isThinking}
                     >
                         <div className="flex items-start gap-2">
