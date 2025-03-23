@@ -7,10 +7,15 @@ module.exports = {
   content: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
   theme: {
     screens: {
+      // Define smaller breakpoints first
       '2xs': '180px',
       'xs': '360px',
-      // Keep the default breakpoints by spreading tailwind defaults
-      ...require('tailwindcss/defaultTheme').screens,
+      // Then add the default breakpoints with explicit values to ensure correct ordering
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
     },
     extend: {
       fontFamily: {

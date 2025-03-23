@@ -319,7 +319,7 @@ export function SiteHeader() {
             <Button
               variant="ghost"
               size="sm"
-              className="2xs:flex hover:bg-primary-foreground hover:text-primary h-7 items-center justify-center gap-1.5 rounded-full border px-2 md:hidden"
+              className="2xs:flex hover:bg-primary-foreground hover:text-primary h-7 items-center justify-center gap-1.5 rounded-full border px-2 md:flex"
               disabled={isChangingVisibility}
             >
               {isChangingVisibility ? (

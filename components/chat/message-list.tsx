@@ -106,7 +106,7 @@ export function MessageList({ chatId, messages, messagesEndRef, isThinking }: Me
                             <div className="bg-background flex min-h-10 min-w-10 items-center justify-center rounded-full border">
                                 <Sparkles className="size-4 animate-pulse" />
                             </div>
-                            <div className="bg-background text-foreground relative rounded-xl rounded-tl-none p-3 font-mono text-sm shadow-sm">
+                            <div className="bg-background text-foreground relative p-3 font-mono text-sm">
                                 <AnimatedGradientText text="AI is thinking..." />
                             </div>
                         </div>

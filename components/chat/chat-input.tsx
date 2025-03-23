@@ -46,6 +46,24 @@ export function ChatInput({
 }: ChatInputProps) {
   const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false)
   const [initialHeight, setInitialHeight] = React.useState(0)
+  const [isMobileDevice, setIsMobileDevice] = React.useState(false)
+  
+  // Detect if device is mobile on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Multiple checks for mobile detection
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+      const isMobileByUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      const isTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isNarrowScreen = window.innerWidth <= 768;
+      
+      // Consider a device mobile if it matches at least two conditions
+      const mobileDetected = [isMobileByUA, isTouchScreen, isNarrowScreen].filter(Boolean).length >= 2;
+      
+      setIsMobileDevice(mobileDetected);
+      console.log("Device detected as:", mobileDetected ? "mobile" : "desktop");
+    }
+  }, []);
   
   // Detect mobile keyboard
   React.useEffect(() => {
@@ -57,6 +75,7 @@ export function ChatInput({
         const heightDifference = initialHeight - window.innerHeight
         const heightChangePercentage = (heightDifference / initialHeight) * 100
         
+        // Only trigger keyboard visibility on significant height changes (likely mobile keyboards)
         if (heightChangePercentage > 25) {
           setIsKeyboardVisible(true)
         } else {
@@ -68,7 +87,10 @@ export function ChatInput({
       const handleFocus = (e: FocusEvent) => {
         const target = e.target as HTMLElement
         if (target.id === 'ai-input') {
-          setTimeout(() => setIsKeyboardVisible(true), 100)
+          // Only set keyboard visible for mobile devices
+          if (isMobileDevice) {
+            setTimeout(() => setIsKeyboardVisible(true), 100)
+          }
         }
       }
       
@@ -86,14 +108,15 @@ export function ChatInput({
         document.removeEventListener('focusout', handleBlur)
       }
     }
-  }, [initialHeight])
+  }, [initialHeight, isMobileDevice])
   
-  // Dynamically apply positioning classes based on keyboard visibility
+  // Dynamically apply positioning classes based on keyboard visibility AND device type
   const positioningClasses = React.useMemo(() => {
-    return isKeyboardVisible
-      ? "fixed bottom-2" // Position at bottom-1 when keyboard is visible
-      : "" // Default positioning
-  }, [isKeyboardVisible])
+    // Only apply fixed positioning if both: mobile device AND keyboard visible
+    return isMobileDevice && isKeyboardVisible 
+      ? "fixed bottom-2" // Position at bottom when mobile keyboard is visible
+      : "" // Default positioning for desktop/PC inputs
+  }, [isKeyboardVisible, isMobileDevice])
 
   return (
     <div className={cn('w-[95%] rounded-2xl border shadow-xl xl:w-1/2', positioningClasses, className)}>
