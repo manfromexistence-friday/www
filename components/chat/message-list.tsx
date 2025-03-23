@@ -1,3 +1,4 @@
+//// filepath: /workspace/friday/www/components/chat/message-list.tsx
 import React, { useLayoutEffect, useRef, useState, useCallback, useEffect } from "react"
 import { Message } from "@/types/chat"
 import { ChatMessage } from "@/components/chat/chat-message"
@@ -21,13 +22,12 @@ export function MessageList({
   const messagesList = Array.isArray(messages) ? messages : []
   const containerRef = useRef<HTMLDivElement>(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
-  const prevMessagesLengthRef = useRef(messagesList.length)
 
-  // Track final messages to show (without the thinking state).
+  // Final messages (without the thinking placeholder)
   const [latestMessages, setLatestMessages] = useState<Message[]>(messagesList)
 
-  // Track displayed "thinking" state.
-  const [thinkingVisible, setThinkingVisible] = useState(isThinking || false)
+  // Whether the placeholder is appended
+  const [thinkingVisible, setThinkingVisible] = useState(false)
 
   const wasThinking = useRef(isThinking)
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -47,78 +47,70 @@ export function MessageList({
     }
   }, [])
 
-  // Show/hide thinking logic
+  // Handle thinking transitions
   useEffect(() => {
     if (responseTimer.current) {
       clearTimeout(responseTimer.current)
       responseTimer.current = null
     }
 
-    if (isThinking) {
-      // AI started thinking
+    // 1. User’s message is added to messagesList by parent.
+    // 2. If AI just started thinking, we append placeholder.
+    if (isThinking && !wasThinking.current) {
+      setLatestMessages([...messagesList])
       setThinkingVisible(true)
-    } else if (wasThinking.current && !isThinking) {
-      // AI just finished thinking - remove indicator, then show response
+    }
+    // 3. If AI just finished, remove placeholder, then show response.
+    else if (wasThinking.current && !isThinking) {
       setThinkingVisible(false)
       responseTimer.current = setTimeout(() => {
         setLatestMessages([...messagesList])
       }, 500)
-    } else {
-      // Normal updates (user message, etc.)
+    }
+    // 4. Otherwise, normal updates.
+    else {
       setLatestMessages([...messagesList])
     }
 
     wasThinking.current = isThinking
-
     return () => {
-      if (responseTimer.current) clearTimeout(responseTimer.current)
+      if (responseTimer.current) {
+        clearTimeout(responseTimer.current)
+      }
     }
   }, [isThinking, messagesList])
 
-  // Scroll when messages change
+  // Scroll on new messages
   useLayoutEffect(() => {
-    const messagesChanged = latestMessages.length !== prevMessagesLengthRef.current
-    prevMessagesLengthRef.current = latestMessages.length
-
-    if (messagesChanged) {
-      scrollToBottom()
-      const timeouts = [10, 50, 100, 300, 500].map((delay) =>
-        setTimeout(scrollToBottom, delay)
-      )
-      return () => timeouts.forEach(clearTimeout)
-    }
+    scrollToBottom()
   }, [latestMessages, scrollToBottom])
 
   // Scroll listener
   useEffect(() => {
     const current = containerRef.current
-    if (!current) return
-    current.addEventListener("scroll", handleScroll)
-    return () => current.removeEventListener("scroll", handleScroll)
+    if (current) {
+      current.addEventListener("scroll", handleScroll)
+      return () => current.removeEventListener("scroll", handleScroll)
+    }
   }, [handleScroll])
 
-  // Scroll on resize
+  // Resize
   useEffect(() => {
     const handleResize = () => setTimeout(scrollToBottom, 100)
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [scrollToBottom])
 
-  // Initial scroll
-  useEffect(() => {
-    scrollToBottom()
-  }, [scrollToBottom])
-
-  // If thinking is visible, display a fake "assistant message" at the end
+  // Create a combined list that includes the placeholder if needed
   const visibleMessages: Message[] = thinkingVisible
     ? [
         ...latestMessages,
         {
           id: "thinking-indicator",
-          content: "thinking", // a placeholder we’ll interpret in chat-message
+          content: "thinking",
           role: "assistant",
           timestamp: Date.now().toString(),
-        } as Message,
+        } as Message
       ]
     : latestMessages
 
@@ -129,7 +121,7 @@ export function MessageList({
       style={{ scrollBehavior: "smooth" }}
     >
       <div className="w-full space-y-3 md:px-4 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2">
-        {/* Render message list */}
+        {/* Render messages */}
         {visibleMessages.map((message, index) => (
           <ChatMessage
             key={`${message.id || index}-${message.timestamp}`}
@@ -139,11 +131,9 @@ export function MessageList({
           />
         ))}
 
-        {/* This element is used for scrolling to bottom */}
-        <div ref={messagesEndRef} className="h-20 w-full"></div>
+        <div ref={messagesEndRef} className="h-20 w-full" />
       </div>
 
-      {/* Scroll button */}
       <Button
         onClick={scrollToBottom}
         className={cn(
