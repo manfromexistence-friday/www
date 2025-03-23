@@ -1,4 +1,3 @@
-//// filepath: /workspace/friday/www/components/chat/message-list.tsx
 import React, { useLayoutEffect, useRef, useState, useCallback, useEffect } from "react"
 import { Message } from "@/types/chat"
 import { ChatMessage } from "@/components/chat/chat-message"
@@ -19,18 +18,25 @@ export function MessageList({
   messagesEndRef,
   isThinking
 }: MessageListProps) {
-  const messagesList = Array.isArray(messages) ? messages : []
   const containerRef = useRef<HTMLDivElement>(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
 
-  // Final messages (without the thinking placeholder)
-  const [latestMessages, setLatestMessages] = useState<Message[]>(messagesList)
-
-  // Whether the placeholder is appended
-  const [thinkingVisible, setThinkingVisible] = useState(false)
-
-  const wasThinking = useRef(isThinking)
-  const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Display state machine: each state is explicit about what's showing
+  type DisplayState = 'normal' | 'showing-thinking' | 'hiding-thinking' | 'showing-response'
+  const [displayState, setDisplayState] = useState<DisplayState>('normal')
+  
+  // The messages we're actually rendering
+  const [visibleMessages, setVisibleMessages] = useState<Message[]>(messages)
+  
+  // Keep track of the pending AI response when we're hiding the thinking indicator
+  const pendingResponseRef = useRef<Message[]>([])
+  
+  // Timer references
+  const hideThinkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const showResponseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  
+  // Whether the thinking indicator is visible
+  const thinkingVisible = displayState === 'showing-thinking'
 
   const scrollToBottom = useCallback(() => {
     if (containerRef.current) {
@@ -42,77 +48,98 @@ export function MessageList({
   const handleScroll = useCallback(() => {
     if (containerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current
-      const atBottom = scrollHeight - scrollTop - clientHeight < 100
-      setShowScrollButton(!atBottom)
+      const nearBottom = scrollHeight - scrollTop - clientHeight < 100
+      setShowScrollButton(!nearBottom)
     }
   }, [])
 
-  // Handle thinking transitions
+  // Clear any active timers
+  const clearTimers = useCallback(() => {
+    if (hideThinkingTimer.current) {
+      clearTimeout(hideThinkingTimer.current)
+      hideThinkingTimer.current = null
+    }
+    if (showResponseTimer.current) {
+      clearTimeout(showResponseTimer.current)
+      showResponseTimer.current = null
+    }
+  }, [])
+
+  // Handle state transitions based on isThinking changes
   useEffect(() => {
-    if (responseTimer.current) {
-      clearTimeout(responseTimer.current)
-      responseTimer.current = null
-    }
-
-    // 1. User’s message is added to messagesList by parent.
-    // 2. If AI just started thinking, we append placeholder.
-    if (isThinking && !wasThinking.current) {
-      setLatestMessages([...messagesList])
-      setThinkingVisible(true)
-    }
-    // 3. If AI just finished, remove placeholder, then show response.
-    else if (wasThinking.current && !isThinking) {
-      setThinkingVisible(false)
-      responseTimer.current = setTimeout(() => {
-        setLatestMessages([...messagesList])
-      }, 500)
-    }
-    // 4. Otherwise, normal updates.
-    else {
-      setLatestMessages([...messagesList])
-    }
-
-    wasThinking.current = isThinking
-    return () => {
-      if (responseTimer.current) {
-        clearTimeout(responseTimer.current)
+    // First, clear any pending timers
+    clearTimers()
+    
+    if (isThinking) {
+      console.log("AI is thinking - showing indicator")
+      // When thinking starts, show the thinking indicator immediately
+      setVisibleMessages([...messages]) // Update with latest messages (including user message)
+      setDisplayState('showing-thinking')
+    } else {
+      // If we were previously thinking and now we're not
+      if (displayState === 'showing-thinking') {
+        console.log("AI stopped thinking - starting removal sequence")
+        // Save the latest messages (AI response) for later
+        pendingResponseRef.current = [...messages]
+        
+        // First transition: hide the thinking indicator
+        setDisplayState('hiding-thinking')
+        
+        // After a delay, remove it completely
+        hideThinkingTimer.current = setTimeout(() => {
+          console.log("Thinking indicator removed, now showing response")
+          // Now transition to showing the response
+          setDisplayState('showing-response')
+          
+          // After another delay to ensure DOM updates, show the AI response
+          showResponseTimer.current = setTimeout(() => {
+            console.log("Showing AI response")
+            setVisibleMessages([...pendingResponseRef.current])
+            setDisplayState('normal')
+          }, 200)
+        }, 600) // Longer delay to ensure indicator has time to animate out
+      } else {
+        // Normal updates (not during thinking transitions)
+        setVisibleMessages([...messages])
+        setDisplayState('normal')
       }
     }
-  }, [isThinking, messagesList])
+    
+    return clearTimers
+  }, [isThinking, displayState, messages, clearTimers])
 
-  // Scroll on new messages
+  // Re-scroll on message changes
   useLayoutEffect(() => {
     scrollToBottom()
-  }, [latestMessages, scrollToBottom])
+  }, [visibleMessages, scrollToBottom])
 
-  // Scroll listener
+  // Watch for container scrolling
   useEffect(() => {
-    const current = containerRef.current
-    if (current) {
-      current.addEventListener("scroll", handleScroll)
-      return () => current.removeEventListener("scroll", handleScroll)
-    }
+    const ref = containerRef.current
+    if (!ref) return
+    ref.addEventListener("scroll", handleScroll)
+    return () => ref.removeEventListener("scroll", handleScroll)
   }, [handleScroll])
 
-  // Resize
+  // Scroll on resize
   useEffect(() => {
     const handleResize = () => setTimeout(scrollToBottom, 100)
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [scrollToBottom])
 
-  // Create a combined list that includes the placeholder if needed
-  const visibleMessages: Message[] = thinkingVisible
+  // Add the thinking indicator if needed
+  const messagesToRender: Message[] = thinkingVisible
     ? [
-        ...latestMessages,
+        ...visibleMessages,
         {
           id: "thinking-indicator",
           content: "thinking",
           role: "assistant",
           timestamp: Date.now().toString(),
-        } as Message
+        }
       ]
-    : latestMessages
+    : visibleMessages
 
   return (
     <div
@@ -121,8 +148,7 @@ export function MessageList({
       style={{ scrollBehavior: "smooth" }}
     >
       <div className="w-full space-y-3 md:px-4 lg:mx-auto lg:w-[90%] lg:px-0 xl:w-1/2">
-        {/* Render messages */}
-        {visibleMessages.map((message, index) => (
+        {messagesToRender.map((message, index) => (
           <ChatMessage
             key={`${message.id || index}-${message.timestamp}`}
             message={message}
