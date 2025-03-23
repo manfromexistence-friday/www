@@ -210,3 +210,19 @@
     scrollbar-width: none;
   }
 }
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 500ms ease-out;
+}
+
+/* Default state for assistant message content */
+.hover:text-primary {
+  opacity: 1;
+  transition: opacity 500ms ease-in;
+}
+
+/* Ensure thinking-content inherits transition behavior */
+.thinking-content {
+  width: 100%;
+}

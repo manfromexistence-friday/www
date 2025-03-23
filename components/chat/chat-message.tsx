@@ -14,9 +14,19 @@ interface ChatMessageProps {
   message: Message
   chatId: string | null
   index: number
+  className?: string
+  isFadingOut?: boolean
+  onTransitionEnd?: () => void
 }
 
-export function ChatMessage({ message, chatId, index }: ChatMessageProps) {
+export function ChatMessage({ 
+  message, 
+  chatId, 
+  index, 
+  className, 
+  isFadingOut, 
+  onTransitionEnd 
+}: ChatMessageProps) {
   const { user } = useAuth()
   const isAssistant = message.role === 'assistant'
 
@@ -25,9 +35,8 @@ export function ChatMessage({ message, chatId, index }: ChatMessageProps) {
   const userEmail = (user as FirebaseUser)?.email
   const fallbackInitial = userName?.[0] || userEmail?.[0]?.toUpperCase() || 'U'
 
-  // Regular assistant or user message display
   return (
-    <div className={cn('flex w-full gap-0', isAssistant ? 'justify-start' : 'justify-end')}>
+    <div className={cn('flex w-full gap-0', isAssistant ? 'justify-start' : 'justify-end', className)}>
       {!isAssistant && (
         <div className="flex w-full items-center justify-end gap-2">
           <div className="hover:bg-primary-foreground hover:text-primary relative flex min-h-10 items-center justify-center rounded-xl rounded-tr-none border p-2 font-mono text-sm">
@@ -58,9 +67,17 @@ export function ChatMessage({ message, chatId, index }: ChatMessageProps) {
               <AiMessage content={message.content} reactions={message.reactions} />
             </PopoverContent>
           </Popover>
-          <div className="hover:text-primary relative flex min-h-10 w-full items-center p-2 font-mono text-sm">
+          <div
+            className={cn(
+              "hover:text-primary relative flex min-h-10 w-full items-center p-2 font-mono text-sm",
+              { "fade-out": isFadingOut }
+            )}
+            onTransitionEnd={onTransitionEnd}
+          >
             {message.content === 'thinking' ? (
-              <AnimatedGradientText text="AI is thinking..." />
+              <div className="thinking-content">
+                <AnimatedGradientText text="AI is thinking..." />
+              </div>
             ) : (
               <MarkdownPreview content={message.content} />
             )}
