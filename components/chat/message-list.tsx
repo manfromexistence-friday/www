@@ -44,9 +44,14 @@ export function MessageList({
     if (isThinking) {
       setShowThinking(true)
       setIsFadingOut(false)
-      // Add a placeholder assistant message if no response yet
-      const hasAssistantMessage = messages.some(m => m.role === "assistant")
-      if (!hasAssistantMessage) {
+      
+      // FIXED: Instead of checking for ANY assistant message,
+      // check if the last message is from the user (meaning we need to show thinking)
+      const lastMessage = messages[messages.length - 1];
+      const needsThinkingIndicator = lastMessage && lastMessage.role === "user";
+      
+      if (needsThinkingIndicator) {
+        // Add the thinking indicator after the user's message
         setVisibleMessages([
           ...messages,
           {
@@ -55,14 +60,17 @@ export function MessageList({
             role: "assistant",
             timestamp: Date.now().toString(),
           }
-        ])
+        ]);
+      } else {
+        // Just update with current messages
+        setVisibleMessages([...messages]);
       }
     } else if (showThinking) {
       setIsFadingOut(true) // Start fading out the thinking indicator
     } else {
       setVisibleMessages([...messages]) // Update with latest messages
     }
-  }, [isThinking, messages])
+  }, [isThinking, messages, showThinking])
 
   // Handle transition end to update messages after fade-out
   const handleTransitionEnd = useCallback(() => {
