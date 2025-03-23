@@ -38,8 +38,13 @@ import {
 import { History } from "@/components/sidebar/history"
 import { NavUser } from "@/components/sidebar/nav-user"
 import { TeamSwitcher } from "@/components/sidebar/team-switcher"
-import { useCallback, useState, useEffect } from "react"
+import { useCallback } from "react"
 import { v4 as uuidv4 } from 'uuid'
+import { useRouter } from "next/navigation"
+import { doc, setDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase/config"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
 
 export interface ScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string
@@ -365,11 +370,54 @@ export default function LeftSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const { state, toggleSidebar } = useSidebar()
-  const [chatLink, setChatLink] = useState<{ pathname: string }>({ pathname: '/chat' })
+  const router = useRouter()
+  const { user } = useAuth()
   
-  useEffect(() => {
-    setChatLink({ pathname: `/chat/${uuidv4()}` })
-  }, [])
+  // Create a handler function for the Start New button
+  const handleStartNew = useCallback(async () => {
+    try {
+      if (!user) {
+        toast.error("Authentication required", {
+          description: "Please sign in to start a new chat",
+          duration: 3000,
+        });
+        return;
+      }
+      
+      // Generate a new UUID for the chat
+      const chatId = uuidv4()
+      
+      // Create initial chat data with empty messages array
+      const chatData = {
+        id: chatId,
+        title: "New Chat",
+        messages: [], // Start with empty messages array
+        model: "gemini-2.0-flash", // Default model
+        visibility: 'public',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        creatorUid: user.uid,
+        isNew: true // Flag to indicate this is a brand new chat
+      }
+
+      // Store chat data in Firestore
+      await setDoc(doc(db, "chats", chatId), chatData)
+      
+      // Store information in sessionStorage
+      sessionStorage.setItem('selectedAI', "gemini-2.0-flash")
+      sessionStorage.setItem('chatId', chatId)
+      sessionStorage.setItem('isNewChat', 'true')
+      
+      // Navigate to the new chat
+      router.push(`/chat/${chatId}`)
+      
+    } catch (error) {
+      console.error("Error creating new chat:", error)
+      toast.error("Failed to create new chat", {
+        description: "Please try again"
+      });
+    }
+  }, [user, router])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -379,8 +427,9 @@ export default function LeftSidebar({
       <SidebarContent>
         <ScrollArea className="w-full p-0">
           <div className="mb-2 flex flex-col gap-1 px-2">
-            <Link 
-              href={chatLink}
+            {/* Replace Link with button that calls our handler */}
+            <button 
+              onClick={handleStartNew}
               className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex min-h-8 min-w-8 items-center justify-center rounded-md border text-sm"
             >
               {state === "expanded" ? (
@@ -388,7 +437,7 @@ export default function LeftSidebar({
               ) : (
                 <Plus className="size-4" />
               )}
-            </Link>
+            </button>
 
             <Link href="/">
               <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
